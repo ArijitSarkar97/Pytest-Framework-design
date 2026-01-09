@@ -1,52 +1,40 @@
 services:
-  # --------------------------------------------------------------------------------
-  # DATABASE (PostgreSQL)
-  # --------------------------------------------------------------------------------
-  - type: psql
-    name: pytest-architect-db
-    env: docker
-    plan: free
-    databaseName: pytest_architect
-    user: admin
-
-  # --------------------------------------------------------------------------------
-  # BACKEND (Docker Web Service)
-  # --------------------------------------------------------------------------------
+  # BACKEND SERVICE
   - type: web
-    name: pytest-architect-backend
-    env: docker
+    name: pytest-backend
+    env: node
+    root: backend
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm start
     plan: free
-    rootDir: backend
-    dockerfilePath: ./Dockerfile
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: pytest-architect-db
+          name: pytest-db
           property: connectionString
-      - key: PORT
-        value: 3001
-      - key: PUPPETEER_EXECUTABLE_PATH
-        value: /usr/bin/google-chrome-stable
-      # Add this if you want to skip local chromium download during npm install
-      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
-        value: "true"
+      - key: NODE_ENV
+        value: production
 
-  # --------------------------------------------------------------------------------
-  # FRONTEND (Static Site)
-  # --------------------------------------------------------------------------------
-  - type: web
-    name: pytest-architect-frontend
+  # FRONTEND STATIC SITE
+  - type: static
+    name: pytest-frontend
     env: static
-    plan: free
+    root: .
     buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
-    envVars:
-      - key: VITE_API_URL
-        fromService:
-          type: web
-          name: pytest-architect-backend
-          property: url
+    publishDir: dist
+    plan: free
     routes:
       - type: rewrite
         source: /*
         destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          name: pytest-backend
+          property: url
+
+databases:
+  - name: pytest-db
+    plan: free
+    databaseName: pytest_architect
+    user: pytest_user
