@@ -1,6 +1,14 @@
 import { AutomationProject } from '../types';
 
-const API_BASE_URL = 'http://localhost:3001/api/frameworks';
+
+const getApiUrl = () => {
+    // Falls back to localhost for local dev if env var not set
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+};
+
+const API_BASE_URL = `${getApiUrl()}/api/frameworks`;
+
 
 export interface SavedFramework {
     id: string;
@@ -100,7 +108,7 @@ export const apiService = {
 
     fetchPageDom: async (url: string): Promise<string> => {
         // Note: calling /api/fetch-url (sibling to /api/frameworks)
-        const response = await fetch('http://localhost:3001/api/fetch-url', {
+        const response = await fetch(`${getApiUrl()}/api/fetch-url`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url })
