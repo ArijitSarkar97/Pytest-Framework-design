@@ -4,15 +4,34 @@ export const generatePyTestFramework = (project: AutomationProject): Map<string,
     const files = new Map<string, string>();
 
     // 1. Root Config Files
-    files.set('requirements.txt', `pytest==7.4.0\nselenium==4.10.0\nallure-pytest==2.13.2\ncolorlog==6.7.0\nwebdriver-manager==4.0.0\npytest-xdist==3.3.1`);
+    files.set('requirements.txt', `pytest==7.4.0\nselenium==4.10.0\nallure-pytest==2.13.2\ncolorlog==6.7.0\nwebdriver-manager==4.0.0\npytest-xdist==3.3.1\nPyYAML==6.0.1`);
     files.set('pytest.ini', `[pytest]\naddopts = --alluredir=./allure-results --clean-alluredir --log-cli-level=INFO\nlog_cli = true\nlog_cli_format = %(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)\nlog_cli_date_format = %Y-%m-%d %H:%M:%S\npython_files = test_*.py`);
 
-    files.set('config/config.json', JSON.stringify({
-        base_url: project.config.baseUrl,
-        browser: project.config.browser,
-        headless: project.config.headless,
-        implicit_wait: 10
-    }, null, 4));
+    files.set('config/config.yaml', `
+browser:
+  default: "${project.config.browser || 'chrome'}"
+  headless: ${project.config.headless ?? true}
+  implicit_wait: 10
+  page_load_timeout: 30
+
+environments:
+  dev:
+    base_url: "${project.config.baseUrl}"
+    username: "admin"
+    password: "password"
+  staging:
+    base_url: "${project.config.baseUrl.replace('dev', 'staging')}"
+    username: "admin"
+    password: "password"
+  prod:
+    base_url: "${project.config.baseUrl.replace('dev', 'www')}"
+    username: "admin"
+    password: "password"
+
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+`);
 
     // 2. Conftest (Fixtures & Hooks)
     files.set('conftest.py', generateConftest());
@@ -492,21 +511,66 @@ def get_logger(name=__name__):
     return logger
 `;
 
-const generateEnvironment = () => `import json
+const generateEnvironment = () => `"""
+Environment configuration module for managing test environments and settings.
+"""
+
+import yaml
 import os
 from pathlib import Path
 
-class Environment:
-    def __init__(self):
-        self.config = self._load_config()
 
+class Environment:
+    """
+    Environment configuration class to manage different test environments.
+    """
+    
+    def __init__(self, env_name=None):
+        """
+        Initialize environment configuration.
+        
+        Args:
+            env_name: Environment name (dev, staging, prod). If None, uses ENV environment variable or defaults to 'dev'
+        """
+        self.env_name = env_name or os.getenv('ENV', 'dev')
+        self.config = self._load_config()
+        self.current_env = self.config['environments'][self.env_name]
+    
     def _load_config(self):
-        # Assuming config.json is in the sibling 'config' directory relative to project root
-        # or relative to this file.
-        # This file is config/environment.py
-        config_path = Path(__file__).parent / 'config.json'
-        with open(config_path) as f:
-            return json.load(f)
+        """
+        Load configuration from YAML file.
+        
+        Returns:
+            dict: Configuration dictionary
+        """
+        config_path = Path(__file__).parent / 'config.yaml'
+        try:
+            with open(config_path, 'r') as file:
+                return yaml.safe_load(file)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Configuration file not found at {config_path}")
+        except yaml.YAMLError as e:
+            raise ValueError(f"Error parsing configuration file: {e}")
+    
+    def get_base_url(self):
+        """Get base URL for current environment."""
+        return self.current_env['base_url']
+    
+    def get_username(self):
+        """Get username for current environment."""
+        return self.current_env['username']
+    
+    def get_password(self):
+        """Get password for current environment."""
+        return self.current_env['password']
+    
+    def get_browser_config(self):
+        """Get browser configuration."""
+        return self.config['browser']
+    
+    def get_logging_config(self):
+        """Get logging configuration."""
+        return self.config['logging']
 `;
 
 const generateBaseTest = () => `"""
