@@ -15,14 +15,12 @@ services:
       - key: NODE_ENV
         value: production
 
+staticSites:
   # FRONTEND STATIC SITE
-  - type: static
-    name: pytest-frontend
-    env: static
+  - name: pytest-frontend
     root: .
     buildCommand: npm install && npm run build
     publishDir: dist
-    plan: free
     routes:
       - type: rewrite
         source: /*
@@ -30,6 +28,7 @@ services:
     envVars:
       - key: VITE_API_URL
         fromService:
+          type: web
           name: pytest-backend
           property: url
 
