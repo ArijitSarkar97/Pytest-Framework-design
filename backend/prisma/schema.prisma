@@ -25,6 +25,16 @@ model Framework {
   totalPages Int      @default(0)
   totalTests Int      @default(0)
   lastUrls   String[] // Array of URLs
+
+  // Execution Configuration
+  defaultTimeout      Int     @default(30000)
+  retries             Int     @default(0)
+  retryDelay          Int     @default(1000)
+  
+  // Reporting Configuration
+  useAllureReport     Boolean @default(true)
+  screenshotOnFailure Boolean @default(true)
+  videoRecording      Boolean @default(false)
   
   // Relations
   pages Page[]
