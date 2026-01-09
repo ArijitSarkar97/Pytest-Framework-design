@@ -1,0 +1,84 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Framework {
+  id        String   @id @default(uuid())
+  name      String
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Project configuration
+  projectName String   @default("pytest-automation")
+  baseUrl     String
+  browser     String   @default("chrome")
+  headless    Boolean  @default(true)
+  
+  // Metadata
+  totalPages Int      @default(0)
+  totalTests Int      @default(0)
+  lastUrls   String[] // Array of URLs
+  
+  // Relations
+  pages Page[]
+  tests Test[]
+  
+  @@index([createdAt])
+  @@index([name])
+}
+
+model Page {
+  id          String    @id @default(uuid())
+  name        String
+  frameworkId String
+  framework   Framework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+  
+  elements Element[]
+  
+  @@index([frameworkId])
+}
+
+model Element {
+  id            String  @id @default(uuid())
+  name          String
+  locatorType   String
+  locatorValue  String
+  description   String?
+  pageId        String
+  page          Page    @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  
+  @@index([pageId])
+}
+
+model Test {
+  id          String    @id @default(uuid())
+  name        String
+  type        String    // 'smoke' or 'regression'
+  frameworkId String
+  framework   Framework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+  
+  steps TestStep[]
+  
+  @@index([frameworkId])
+}
+
+model TestStep {
+  id          String  @id @default(uuid())
+  action      String
+  description String
+  value       String?
+  pageId      String?
+  elementId   String?
+  testId      String
+  test        Test    @relation(fields: [testId], references: [id], onDelete: Cascade)
+  order       Int     @default(0)
+  
+  @@index([testId])
+}
