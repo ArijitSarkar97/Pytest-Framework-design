@@ -23,12 +23,11 @@ staticSites:
     publishDir: dist
     routes:
       - type: rewrite
-        source: /*
+        source: "/*"
         destination: /index.html
     envVars:
       - key: VITE_API_URL
         fromService:
-          type: web
           name: pytest-backend
           property: url
 
