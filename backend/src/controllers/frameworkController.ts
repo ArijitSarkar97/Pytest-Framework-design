@@ -17,7 +17,13 @@ export const getAllFrameworks = async (req: Request, res: Response) => {
             orderBy: { updatedAt: 'desc' }
         });
 
-        res.json(frameworks);
+        // Parse JSON fields for SQLite compatibility
+        const frameworksWithParsedJson = frameworks.map(fw => ({
+            ...fw,
+            lastUrls: JSON.parse(fw.lastUrls)
+        }));
+
+        res.json(frameworksWithParsedJson);
     } catch (error) {
         console.error('Error fetching frameworks:', error);
         res.status(500).json({ error: 'Failed to fetch frameworks' });
@@ -44,7 +50,13 @@ export const getFrameworkById = async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'Framework not found' });
         }
 
-        res.json(framework);
+        // Parse JSON fields for SQLite compatibility
+        const frameworkWithParsedJson = {
+            ...framework,
+            lastUrls: JSON.parse(framework.lastUrls)
+        };
+
+        res.json(frameworkWithParsedJson);
     } catch (error) {
         console.error('Error fetching framework:', error);
         res.status(500).json({ error: 'Failed to fetch framework' });
@@ -70,7 +82,7 @@ export const createFramework = async (req: Request, res: Response) => {
                 projectName: project?.projectName || 'pytest-automation',
                 totalPages: project?.pages?.length || 0,
                 totalTests: project?.tests?.length || 0,
-                lastUrls: lastUrls || [],
+                lastUrls: JSON.stringify(lastUrls || []),
                 pages: {
                     create: (project?.pages || []).map((page: any) => ({
                         name: page.name,
@@ -140,7 +152,7 @@ export const updateFramework = async (req: Request, res: Response) => {
                 videoRecording: project?.config?.videoRecording ?? false,
                 totalPages: project?.pages?.length || 0,
                 totalTests: project?.tests?.length || 0,
-                lastUrls: lastUrls || [],
+                lastUrls: JSON.stringify(lastUrls || []),
                 pages: {
                     create: (project?.pages || []).map((page: any) => ({
                         name: page.name,

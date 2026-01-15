@@ -1,7 +1,0 @@
--- AlterTable
-ALTER TABLE "Framework" ADD COLUMN     "defaultTimeout" INTEGER NOT NULL DEFAULT 30000,
-ADD COLUMN     "retries" INTEGER NOT NULL DEFAULT 0,
-ADD COLUMN     "retryDelay" INTEGER NOT NULL DEFAULT 1000,
-ADD COLUMN     "screenshotOnFailure" BOOLEAN NOT NULL DEFAULT true,
-ADD COLUMN     "useAllureReport" BOOLEAN NOT NULL DEFAULT true,
-ADD COLUMN     "videoRecording" BOOLEAN NOT NULL DEFAULT false;
