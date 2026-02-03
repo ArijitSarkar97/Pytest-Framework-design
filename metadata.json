@@ -1,5 +1,0 @@
-{
-  "name": "PyTest Architect AI",
-  "description": "A comprehensive QA Automation Architect tool. Enter a URL, and it uses Gemini AI to generate a complete PyTest + Selenium + Page Object Model framework, including locators, page classes, and test scenarios.",
-  "requestFramePermissions": []
-}

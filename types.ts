@@ -6,6 +6,7 @@ export interface ElementDefinition {
   locatorType: LocatorType;
   locatorValue: string;
   description?: string;
+  tagName?: string; // e.g., "input", "button", "a"
 }
 
 export interface PageDefinition {
@@ -33,7 +34,7 @@ export interface TestCase {
 export interface ProjectConfig {
   projectName: string;
   baseUrl: string;
-  browser: 'chrome' | 'firefox' | 'edge';
+  browser: 'chrome' | 'firefox' | 'edge' | 'all';
   headless: boolean;
 }
 

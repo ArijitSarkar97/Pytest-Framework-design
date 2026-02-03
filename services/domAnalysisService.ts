@@ -26,8 +26,16 @@ const cleanText = (text: string | null): string => {
 // --- Helper: Generate variable name from string ---
 const generateVarName = (base: string, tag: string): string => {
     let name = base.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/^_+|_+$/g, '');
+
+    // Fallback if empty
     if (!name) name = `element_${Math.floor(Math.random() * 1000)}`;
-    return `${name}_${tag}`; // e.g., "submit_button"
+
+    // Fix: Python variables cannot start with a number
+    if (/^\d/.test(name)) {
+        name = `el_${name}`;
+    }
+
+    return `${name}_${tag}`; // e.g., "submit_button" or "el_1st_item_link"
 };
 
 // --- Helper: Generate Relative XPath (Dependent/Independent) ---
@@ -282,7 +290,8 @@ export const analyzeDomAndGenerateSchema = async (
                 name,
                 locatorType: loc.type,
                 locatorValue: loc.value,
-                description: `Auto-generated for <${el.tagName.toLowerCase()}>`
+                description: `Auto-generated for <${el.tagName.toLowerCase()}>`,
+                tagName: el.tagName.toLowerCase()
             });
         }
     });

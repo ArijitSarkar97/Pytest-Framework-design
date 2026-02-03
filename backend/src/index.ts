@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import frameworkRoutes from './routes/frameworks';
+import pomPagesRoutes from './routes/pomPages';
 // @ts-ignore
 import puppeteer from 'puppeteer';
 
@@ -16,6 +17,7 @@ app.use(express.json({ limit: '50mb' }));
 
 // Routes
 app.use('/api/frameworks', frameworkRoutes);
+app.use('/api/pom-pages', pomPagesRoutes);
 
 // Helper endpoint to fetch raw HTML (bypass CORS / context for AI)
 app.post('/api/fetch-url', async (req, res) => {

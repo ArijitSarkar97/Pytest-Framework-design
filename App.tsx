@@ -7,10 +7,11 @@ import {
   mapFrameworkToProject,
   type SavedFramework
 } from './services/apiService';
+import { pomPageService, type PomPageSet } from './services/pomPageService';
 import {
   Bot, Layout, Code2, Play, Download, Settings,
   Plus, Trash2, FileJson, ChevronRight, Loader2, Database, AlertCircle,
-  Folder, FolderOpen, File, FileCode, FileText, Save, Upload, Clock
+  Folder, FolderOpen, File, FileCode, FileText, Save, Upload, Clock, Layers
 } from 'lucide-react';
 
 // --- Default State ---
@@ -136,7 +137,7 @@ const FileIcon = ({ name }: { name: string }) => {
 
 const App: React.FC = () => {
   const [project, setProject] = useState<AutomationProject>(INITIAL_PROJECT);
-  const [activeTab, setActiveTab] = useState<'setup' | 'ai' | 'pages' | 'tests' | 'preview' | 'frameworks'>('ai');
+  const [activeTab, setActiveTab] = useState<'ai' | 'pages' | 'tests' | 'preview' | 'frameworks' | 'pomsets'>('ai');
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiUrls, setAiUrls] = useState<string[]>(['']); // Support multiple URLs
   const [aiContext, setAiContext] = useState('');
@@ -149,6 +150,13 @@ const App: React.FC = () => {
   const [savedFrameworks, setSavedFrameworks] = useState<SavedFramework[]>([]);
   const [activeFrameworkId, setActiveFrameworkId] = useState<string | null>(null);
   const [frameworkName, setFrameworkName] = useState('');
+
+  // POM Pages State (Separate storage for analyzed pages)
+  const [savedPomSets, setSavedPomSets] = useState<PomPageSet[]>([]);
+  const [pomSetName, setPomSetName] = useState('');
+
+  // Generation Mode: 'pom' for POM Pages only, 'framework' for Full Framework
+  const [generationMode, setGenerationMode] = useState<'pom' | 'framework'>('framework');
 
   // URL Management Handlers
   const handleUrlChange = (index: number, value: string) => {
@@ -168,7 +176,7 @@ const App: React.FC = () => {
     }
   };
 
-  // Load saved frameworks on mount
+  // Load saved frameworks and POM sets on mount
   useEffect(() => {
     const fetchFrameworks = async () => {
       try {
@@ -196,7 +204,17 @@ const App: React.FC = () => {
       }
     };
 
+    const fetchPomSets = async () => {
+      try {
+        const pomSets = await pomPageService.getAll();
+        setSavedPomSets(pomSets);
+      } catch (error) {
+        console.error('Failed to load POM sets:', error);
+      }
+    };
+
     fetchFrameworks();
+    fetchPomSets();
   }, []);
 
   // Framework Management Handlers
@@ -313,6 +331,74 @@ const App: React.FC = () => {
     reader.readAsText(file);
   };
 
+  // POM Pages Management Handlers
+  const handleSavePomSet = async () => {
+    const validUrls = aiUrls.filter(url => url.trim());
+    if (project.pages.length === 0) {
+      alert('No pages to save. Generate pages first using the AI Architect.');
+      return;
+    }
+
+    const name = pomSetName || `POM_${new Date().toLocaleString()}`;
+    const sourceUrl = validUrls[0] || project.config.baseUrl;
+
+    try {
+      const saved = await pomPageService.create(name, sourceUrl, project.pages);
+      setSavedPomSets(prev => [saved, ...prev]);
+      setPomSetName('');
+      alert(`POM Pages "${name}" saved successfully!`);
+    } catch (error) {
+      alert('Failed to save POM pages');
+      console.error(error);
+    }
+  };
+
+  const handleLoadPomSet = async (id: string) => {
+    try {
+      const pomSet = await pomPageService.getById(id);
+      // Convert POM pages to PageDefinition format
+      const loadedPages: PageDefinition[] = pomSet.pages.map(p => ({
+        id: p.id,
+        name: p.name,
+        elements: p.elements.map(e => ({
+          id: e.id,
+          name: e.name,
+          locatorType: e.locatorType as any,
+          locatorValue: e.locatorValue,
+          description: e.description
+        }))
+      }));
+
+      setProject(prev => ({
+        ...prev,
+        pages: [...prev.pages, ...loadedPages]
+      }));
+
+      if (pomSet.sourceUrl) {
+        setAiUrls([pomSet.sourceUrl]);
+      }
+
+      setActiveTab('pages');
+      alert(`POM Pages loaded successfully! ${loadedPages.length} pages added.`);
+    } catch (error) {
+      alert('Failed to load POM pages');
+      console.error(error);
+    }
+  };
+
+  const handleDeletePomSet = async (id: string) => {
+    if (confirm('Are you sure you want to delete this POM set?')) {
+      try {
+        await pomPageService.delete(id);
+        setSavedPomSets(prev => prev.filter(ps => ps.id !== id));
+        alert('POM set deleted successfully');
+      } catch (error) {
+        alert('Failed to delete POM set');
+        console.error(error);
+      }
+    }
+  };
+
   // AI Generation Handler
   const handleAiGenerate = async () => {
     const validUrls = aiUrls.filter(url => url.trim() !== '');
@@ -338,7 +424,10 @@ const App: React.FC = () => {
           const result = await analyzeDomAndGenerateSchema(htmlContent, url);
 
           if (result.pages) allPages.push(...result.pages);
-          if (result.tests) allTests.push(...result.tests);
+          // Only add tests if generating full framework
+          if (generationMode === 'framework' && result.tests) {
+            allTests.push(...result.tests);
+          }
         } catch (e) {
           console.warn(`Failed to process ${url}`, e);
           const msg = e instanceof Error ? e.message : String(e);
@@ -346,55 +435,77 @@ const App: React.FC = () => {
         }
       }
 
-      // Merge with existing if active framework
-      let finalPages = allPages;
-      let finalTests = allTests;
+      if (generationMode === 'pom') {
+        // POM Pages Only Mode - Save to POM Library
+        const name = pomSetName || `POM_${Date.now()}`;
+        const sourceUrl = validUrls[0];
 
-      if (activeFrameworkId) {
-        // Merge with existing framework
-        finalPages = [...project.pages, ...allPages];
-        finalTests = [...project.tests, ...allTests];
-      }
+        try {
+          const saved = await pomPageService.create(name, sourceUrl, allPages);
+          setSavedPomSets(prev => [saved, ...prev]);
+          setPomSetName('');
 
-      const newProject = {
-        ...project,
-        config: { ...project.config, baseUrl: validUrls[0] },
-        pages: finalPages,
-        tests: finalTests
-      };
+          // Also update local project for preview
+          setProject(prev => ({
+            ...prev,
+            config: { ...prev.config, baseUrl: validUrls[0] },
+            pages: allPages,
+            tests: [] // No tests in POM-only mode
+          }));
 
-      setProject(newProject);
+          alert(`POM Pages "${name}" saved successfully to POM Library!`);
+          setActiveTab('pomsets'); // Navigate to POM Library
+        } catch (err) {
+          console.error("Failed to save POM pages:", err);
+          alert("Failed to save POM pages. Please try again.");
+        }
+      } else {
+        // Full Framework Mode - Original behavior
+        let finalPages = allPages;
+        let finalTests = allTests;
 
-      setProject(newProject);
-
-      // Auto-save to Backend
-      try {
         if (activeFrameworkId) {
-          await apiService.update(activeFrameworkId, frameworkName, newProject, validUrls);
-        } else {
-          const saved = await apiService.create(
-            frameworkName || `Framework_${Date.now()}`,
-            newProject,
-            validUrls
-          );
-          setActiveFrameworkId(saved.id);
-          localStorage.setItem('activeFrameworkId', saved.id);
-          setSavedFrameworks(prev => [saved, ...prev]);
+          // Merge with existing framework
+          finalPages = [...project.pages, ...allPages];
+          finalTests = [...project.tests, ...allTests];
         }
 
-        // Refresh list to hold strict sync
-        const frameworks = await apiService.getAll();
-        setSavedFrameworks(frameworks);
-      } catch (err) {
-        console.error("Auto-save failed:", err);
-        // Don't block UI if auto-save fails
+        const newProject = {
+          ...project,
+          config: { ...project.config, baseUrl: validUrls[0] },
+          pages: finalPages,
+          tests: finalTests
+        };
+
+        setProject(newProject);
+
+        // Auto-save to Backend
+        try {
+          if (activeFrameworkId) {
+            await apiService.update(activeFrameworkId, frameworkName, newProject, validUrls);
+          } else {
+            const saved = await apiService.create(
+              frameworkName || `Framework_${Date.now()}`,
+              newProject,
+              validUrls
+            );
+            setActiveFrameworkId(saved.id);
+            localStorage.setItem('activeFrameworkId', saved.id);
+            setSavedFrameworks(prev => [saved, ...prev]);
+          }
+
+          // Refresh list to hold strict sync
+          const frameworks = await apiService.getAll();
+          setSavedFrameworks(frameworks);
+        } catch (err) {
+          console.error("Auto-save failed:", err);
+          // Don't block UI if auto-save fails
+        }
+
+        setActiveTab('pages'); // Move to pages to review
       }
-
-
-
-      setActiveTab('pages'); // Move to pages to review
     } catch (error) {
-      alert("Failed to generate structure. Please check the URLs or API Key.");
+      alert("Failed to generate structure. Please check the URLs.");
       console.error(error);
     } finally {
       setIsGenerating(false);
@@ -404,16 +515,20 @@ const App: React.FC = () => {
   // Generate Files for Preview
   useEffect(() => {
     if (activeTab === 'preview') {
-      const files = generatePyTestFramework(project);
+      const files = generatePyTestFramework(project, generationMode);
       setPreviewFiles(files);
       // Select the first file (usually requirements or init) or main test file if available
       if (!selectedPreviewFile || !files.has(selectedPreviewFile)) {
-        // Prefer test file or readme
-        const firstFile = files.keys().next().value || '';
-        setSelectedPreviewFile(firstFile);
+        // Preferred order: test file -> specific page -> readme/requirements -> any
+        const allFiles = Array.from(files.keys());
+        const preferred = allFiles.find(f => f.startsWith('tests/test_') && !f.includes('__init__')) ||
+          allFiles.find(f => f.startsWith('pages/') && !f.includes('base_page') && !f.includes('__init__')) ||
+          allFiles[0];
+
+        setSelectedPreviewFile(preferred || '');
       }
     }
-  }, [activeTab, project]);
+  }, [activeTab, project, generationMode]);
 
   const fileTree = useMemo(() => {
     return buildFileTree(Array.from(previewFiles.keys()));
@@ -426,7 +541,7 @@ const App: React.FC = () => {
       return;
     }
     const zip = new window.JSZip();
-    const files = generatePyTestFramework(project);
+    const files = generatePyTestFramework(project, generationMode);
 
     // Create folder structure
     const rootFolder = zip.folder(project.config.projectName);
@@ -458,12 +573,6 @@ const App: React.FC = () => {
             label="AI Architect"
           />
           <SidebarItem
-            active={activeTab === 'setup'}
-            onClick={() => setActiveTab('setup')}
-            icon={<Settings size={20} />}
-            label="Project Setup"
-          />
-          <SidebarItem
             active={activeTab === 'pages'}
             onClick={() => setActiveTab('pages')}
             icon={<Layout size={20} />}
@@ -489,6 +598,13 @@ const App: React.FC = () => {
             icon={<Database size={20} />}
             label="Saved Frameworks"
             badge={savedFrameworks.length}
+          />
+          <SidebarItem
+            active={activeTab === 'pomsets'}
+            onClick={() => setActiveTab('pomsets')}
+            icon={<Layers size={20} />}
+            label="POM Library"
+            badge={savedPomSets.length}
           />
         </nav>
 
@@ -608,19 +724,83 @@ const App: React.FC = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Framework Name
+                      Generation Mode
+                    </label>
+                    <select
+                      value={generationMode}
+                      onChange={(e) => setGenerationMode(e.target.value as 'pom' | 'framework')}
+                      className="block w-full bg-slate-900 border border-slate-700 rounded-lg py-3 px-4 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    >
+                      <option value="framework">🚀 Full Framework (Pages + Tests)</option>
+                      <option value="pom">📄 POM Pages Only</option>
+                    </select>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {generationMode === 'framework'
+                        ? 'Generates page objects, test cases, and saves to Frameworks'
+                        : 'Generates only page objects and saves to POM Library'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      {generationMode === 'framework' ? 'Framework Name' : 'POM Set Name'}
                       <span className="ml-2 text-xs text-slate-500">(Optional - for saving)</span>
                     </label>
                     <input
                       type="text"
-                      value={frameworkName}
-                      onChange={(e) => setFrameworkName(e.target.value)}
-                      placeholder="My Automation Framework"
+                      value={generationMode === 'framework' ? frameworkName : pomSetName}
+                      onChange={(e) => generationMode === 'framework'
+                        ? setFrameworkName(e.target.value)
+                        : setPomSetName(e.target.value)}
+                      placeholder={generationMode === 'framework' ? 'My Automation Framework' : 'My POM Pages'}
                       className="block w-full bg-slate-900 border border-slate-700 rounded-lg py-3 px-4 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                     />
                   </div>
 
-                  {/* API Key section Removed */}
+                  {/* Driver Configuration Section - Only show for Full Framework mode */}
+                  {generationMode === 'framework' && (
+                    <div className="border-t border-slate-700 pt-6 mt-2">
+                      <label className="block text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
+                        <Settings size={16} className="text-indigo-400" />
+                        Driver Configuration
+                      </label>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-xs text-slate-500">Browser</label>
+                          <select
+                            value={project.config.browser}
+                            onChange={(e) => setProject({ ...project, config: { ...project.config, browser: e.target.value as any } })}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-lg py-2.5 px-3 text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          >
+                            <option value="all">🌍 All Browsers</option>
+                            <option value="chrome">🌐 Chrome</option>
+                            <option value="firefox">🦊 Firefox</option>
+                            <option value="edge">🔷 Edge</option>
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs text-slate-500">Project Name</label>
+                          <input
+                            value={project.config.projectName}
+                            onChange={(e) => setProject({ ...project, config: { ...project.config, projectName: e.target.value } })}
+                            placeholder="MyAutomationProject"
+                            className="w-full bg-slate-900 border border-slate-700 rounded-lg py-2.5 px-3 text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div className="flex items-end">
+                          <label className="flex items-center gap-3 bg-slate-900 border border-slate-700 rounded-lg py-2.5 px-4 w-full cursor-pointer hover:border-indigo-500 transition-colors">
+                            <input
+                              type="checkbox"
+                              checked={project.config.headless}
+                              onChange={(e) => setProject({ ...project, config: { ...project.config, headless: e.target.checked } })}
+                              className="w-4 h-4 accent-indigo-500"
+                            />
+                            <span className="text-sm text-slate-300">Headless Mode</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">Additional Context (Optional)</label>
@@ -637,18 +817,20 @@ const App: React.FC = () => {
                     disabled={isGenerating || !aiUrls.some(url => url.trim())}
                     className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all ${isGenerating || !aiUrls.some(url => url.trim())
                       ? 'bg-slate-700 cursor-not-allowed text-slate-400'
-                      : 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg shadow-indigo-900/50 transform hover:-translate-y-0.5'
+                      : generationMode === 'framework'
+                        ? 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg shadow-indigo-900/50 transform hover:-translate-y-0.5'
+                        : 'bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white shadow-lg shadow-cyan-900/50 transform hover:-translate-y-0.5'
                       }`}
                   >
                     {isGenerating ? (
                       <>
                         <Loader2 className="animate-spin" />
-                        Architecting Solution...
+                        {generationMode === 'framework' ? 'Architecting Solution...' : 'Generating POM Pages...'}
                       </>
                     ) : (
                       <>
-                        <Bot size={24} />
-                        Generate Framework
+                        {generationMode === 'framework' ? <Bot size={24} /> : <Layers size={24} />}
+                        {generationMode === 'framework' ? 'Generate Framework' : 'Generate POM Pages'}
                       </>
                     )}
                   </button>
@@ -659,39 +841,6 @@ const App: React.FC = () => {
                       <span>Project generated! Check the <b>Pages</b> and <b>Tests</b> tabs to review.</span>
                     </div>
                   )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Setup Tab */}
-          {activeTab === 'setup' && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold border-b border-slate-800 pb-4">Project Configuration</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InputGroup label="Project Name" value={project.config.projectName} onChange={(v) => setProject({ ...project, config: { ...project.config, projectName: v } })} />
-                <InputGroup label="Base URL" value={project.config.baseUrl} onChange={(v) => setProject({ ...project, config: { ...project.config, baseUrl: v } })} />
-                <div className="space-y-2">
-                  <label className="text-sm text-slate-400">Browser</label>
-                  <select
-                    value={project.config.browser}
-                    onChange={(e) => setProject({ ...project, config: { ...project.config, browser: e.target.value as any } })}
-                    className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-white"
-                  >
-                    <option value="chrome">Chrome</option>
-                    <option value="firefox">Firefox</option>
-                    <option value="edge">Edge</option>
-                  </select>
-                </div>
-                <div className="flex items-center space-x-3 pt-8">
-                  <input
-                    type="checkbox"
-                    id="headless"
-                    checked={project.config.headless}
-                    onChange={(e) => setProject({ ...project, config: { ...project.config, headless: e.target.checked } })}
-                    className="w-5 h-5 accent-indigo-500"
-                  />
-                  <label htmlFor="headless" className="font-medium">Run Headless</label>
                 </div>
               </div>
             </div>
@@ -1010,6 +1159,119 @@ const App: React.FC = () => {
                         </button>
                         <button
                           onClick={() => handleDeleteFramework(fw.id)}
+                          className="bg-red-900/50 hover:bg-red-900 text-red-400 hover:text-red-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* POM Library Tab */}
+          {activeTab === 'pomsets' && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+                <h2 className="text-2xl font-bold flex items-center gap-2">
+                  <Layers className="text-cyan-400" />
+                  POM Library
+                </h2>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="text"
+                    value={pomSetName}
+                    onChange={(e) => setPomSetName(e.target.value)}
+                    placeholder="POM Set Name"
+                    className="bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                  />
+                  <button
+                    onClick={handleSavePomSet}
+                    disabled={project.pages.length === 0}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${project.pages.length === 0
+                      ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                      : 'bg-cyan-600 hover:bg-cyan-700 text-white'
+                      }`}
+                  >
+                    <Save size={16} />
+                    Save Current Pages
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-slate-800/30 border border-slate-700 p-4 rounded-lg mb-6">
+                <p className="text-sm text-slate-400">
+                  <span className="text-cyan-400 font-medium">POM Library</span> stores your analyzed page objects separately,
+                  allowing you to reuse them across different frameworks. Save pages after generating them with AI Architect,
+                  then load them into any framework.
+                </p>
+              </div>
+
+              {savedPomSets.length === 0 ? (
+                <div className="text-center py-20">
+                  <Layers size={64} className="mx-auto mb-4 text-slate-700" />
+                  <h3 className="text-xl font-semibold text-slate-400 mb-2">No Saved POM Sets</h3>
+                  <p className="text-slate-500">
+                    Generate pages using AI Architect, then save them here for reuse across frameworks.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {savedPomSets.map((pomSet) => (
+                    <div
+                      key={pomSet.id}
+                      className="bg-slate-800/50 border border-slate-700 p-6 rounded-xl hover:border-cyan-500/50 transition-all"
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-cyan-400 mb-1">{pomSet.name}</h3>
+                          <div className="flex gap-4 text-sm text-slate-400">
+                            <span className="flex items-center gap-1">
+                              <Layout size={14} />
+                              {pomSet.pages.length} pages
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Code2 size={14} />
+                              {pomSet.pages.reduce((acc, p) => acc + p.elements.length, 0)} elements
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-xs text-slate-500 mb-4">
+                        <div>Source: <span className="font-mono text-slate-400">{pomSet.sourceUrl}</span></div>
+                        <div>Created: {new Date(pomSet.createdAt).toLocaleString()}</div>
+                      </div>
+
+                      <div className="mb-4">
+                        <p className="text-xs text-slate-500 mb-2">Pages included:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {pomSet.pages.slice(0, 5).map((page) => (
+                            <span
+                              key={page.id}
+                              className="bg-slate-700/50 text-slate-300 px-2 py-1 rounded text-xs"
+                            >
+                              {page.name}
+                            </span>
+                          ))}
+                          {pomSet.pages.length > 5 && (
+                            <span className="text-slate-500 text-xs">+{pomSet.pages.length - 5} more</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleLoadPomSet(pomSet.id)}
+                          className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                        >
+                          <Upload size={14} />
+                          Load into Project
+                        </button>
+                        <button
+                          onClick={() => handleDeletePomSet(pomSet.id)}
                           className="bg-red-900/50 hover:bg-red-900 text-red-400 hover:text-red-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                         >
                           <Trash2 size={14} />

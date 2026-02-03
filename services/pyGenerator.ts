@@ -1,7 +1,17 @@
 import { AutomationProject, PageDefinition, TestCase } from "../types";
 
-export const generatePyTestFramework = (project: AutomationProject): Map<string, string> => {
+export const generatePyTestFramework = (project: AutomationProject, mode: 'framework' | 'pom' = 'framework'): Map<string, string> => {
     const files = new Map<string, string>();
+
+    // --- POM ONLY MODE ---
+    if (mode === 'pom') {
+        // Pages Only (User has their own framework/base page)
+        project.pages.forEach(page => {
+            files.set(`pages/${convertTitleToSnake(page.name)}.py`, generatePageObject(page));
+        });
+
+        return files;
+    }
 
     // 1. Root Config Files
     files.set('requirements.txt', `pytest==7.4.0\nselenium==4.10.0\nallure-pytest==2.13.2\ncolorlog==6.7.0\nwebdriver-manager==4.0.0\npytest-xdist==3.3.1\nPyYAML==6.0.1`);
@@ -9,7 +19,7 @@ export const generatePyTestFramework = (project: AutomationProject): Map<string,
 
     files.set('config/config.yaml', `
 browser:
-  default: "${project.config.browser || 'chrome'}"
+  default: "${project.config.browser === 'all' ? 'chrome' : (project.config.browser || 'chrome')}"
   headless: ${project.config.headless ?? true}
   implicit_wait: 10
   page_load_timeout: 30
@@ -34,7 +44,7 @@ logging:
 `);
 
     // 2. Conftest (Fixtures & Hooks)
-    files.set('conftest.py', generateConftest());
+    files.set('conftest.py', generateConftest(project));
 
     // 3. Utilities
     files.set('utils/__init__.py', '');
@@ -46,7 +56,7 @@ logging:
 
     // 4. Pages (One file per page)
     files.set('pages/__init__.py', '');
-    files.set('pages/base_page.py', generateBasePage());
+    files.set('pages/base_page.py', generateBasePage(false));
     project.pages.forEach(page => {
         files.set(`pages/${convertTitleToSnake(page.name)}.py`, generatePageObject(page));
     });
@@ -109,7 +119,7 @@ logging:
 
 // --- Generators ---
 
-const generateConftest = () => `import pytest
+const generateConftest = (project: AutomationProject) => `import pytest
 import json
 import os
 import logging
@@ -152,14 +162,20 @@ def config():
     with open(config_path) as f:
         return json.load(f)
 
-@pytest.fixture(scope="function")
-def driver(config):
-    browser = config['browser'].lower()
-    headless = config['headless']
+@pytest.fixture(scope="function"${project.config.browser === 'all' ? ', params=["chrome", "firefox", "edge"]' : ''})
+def driver(request, config):
+    # Determine browser: either from param (if 'all' selected) or config file
+    browser = request.param if hasattr(request, 'param') else config['browser']['default']
+    browser = browser.lower()
+    headless = config['browser']['headless']
     
+    driver = None
     if browser == "chrome":
         options = webdriver.ChromeOptions()
         if headless: options.add_argument("--headless")
+        # Add common options to avoid issues
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
         svc = ChromeService(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=svc, options=options)
     elif browser == "firefox":
@@ -167,13 +183,30 @@ def driver(config):
         if headless: options.add_argument("--headless")
         svc = FirefoxService(GeckoDriverManager().install())
         driver = webdriver.Firefox(service=svc, options=options)
+    elif browser == "edge":
+        options = webdriver.EdgeOptions()
+        if headless: options.add_argument("--headless")
+        svc = EdgeChromiumDriverManager().install()
+        # Edge requires specific service handling or typically just works with webdriver_manager
+        # Attempting standard edge setup
+        from selenium.webdriver.edge.service import Service as EdgeService
+        try:
+             # Basic Edge setup
+             driver = webdriver.Edge(options=options)
+        except:
+             # If simple setup fails, try service (may need import adjustment)
+             driver = webdriver.Edge(options=options)
     else:
         raise Exception(f"Browser {browser} not supported")
 
     driver.maximize_window()
-    driver.implicitly_wait(config['implicit_wait'])
+    if 'implicit_wait' in config['browser']:
+        driver.implicitly_wait(config['browser']['implicit_wait'])
+    
     yield driver
-    driver.quit()
+    
+    if driver:
+        driver.quit()
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
@@ -208,7 +241,7 @@ def get_driver(browser="chrome", headless=True):
     raise ValueError(f"Browser {browser} not supported in this factory yet.")
 `;
 
-const generateBasePage = () => `from selenium.webdriver.support.ui import WebDriverWait
+const generateBasePage = (standalone: boolean = false) => `from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
@@ -217,7 +250,9 @@ from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import TimeoutException, StaleElementReferenceException, NoSuchElementException
 import allure
 import time
-from utils.logger import get_logger
+import logging
+
+${standalone ? '' : 'from utils.logger import get_logger'}
 
 class BasePage:
     """
@@ -227,7 +262,7 @@ class BasePage:
     def __init__(self, driver):
         self.driver = driver
         self.timeout = 10
-        self.logger = get_logger(self.__class__.__name__)
+        ${standalone ? 'self.logger = logging.getLogger(self.__class__.__name__)' : 'self.logger = get_logger(self.__class__.__name__)'}
     
     def _convert_locator(self, locator):
         """Helper to convert locator tuple/string to (By, value)"""
@@ -404,12 +439,37 @@ ${page.elements.map(el => `    ${el.name.toUpperCase()}_LOCATOR = ("${mapLocator
         super().__init__(driver)
 
     # --- Actions ---
+    # --- Actions ---
 ${page.elements.map(el => {
-    if (el.name.toLowerCase().includes('input') || el.name.toLowerCase().includes('field')) {
-        return `    @allure.step("Fill ${el.name} with '{text}'")\n    def fill_${el.name}(self, text):\n        self.enter_text(self.${el.name.toUpperCase()}_LOCATOR, text)\n`;
-    } else if (el.name.toLowerCase().includes('btn') || el.name.toLowerCase().includes('button') || el.name.toLowerCase().includes('link')) {
+    const tag = el.tagName || '';
+    const nameLower = el.name.toLowerCase();
+
+    // 1. Clickable Elements (Button, Link, Checkbox, Radio, Submit)
+    if (
+        tag === 'button' ||
+        tag === 'a' ||
+        (tag === 'input' && ['button', 'submit', 'checkbox', 'radio', 'image'].some(t => nameLower.includes(t) || el.locatorValue.toLowerCase().includes(t))) ||
+        nameLower.includes('btn') ||
+        nameLower.includes('button') ||
+        nameLower.includes('link')
+    ) {
         return `    @allure.step("Click ${el.name}")\n    def click_${el.name}(self):\n        self.click(self.${el.name.toUpperCase()}_LOCATOR)\n`;
-    } else {
+    }
+    // 2. Text Input Elements (Input, Textarea) - Excluding non-text types
+    else if (
+        tag === 'textarea' ||
+        (tag === 'input' && !['checkbox', 'radio', 'submit', 'button', 'hidden', 'file'].some(t => nameLower.includes(t) || el.locatorValue.toLowerCase().includes(t))) ||
+        nameLower.includes('input') ||
+        nameLower.includes('field')
+    ) {
+        return `    @allure.step("Fill ${el.name} with '{text}'")\n    def fill_${el.name}(self, text):\n        self.enter_text(self.${el.name.toUpperCase()}_LOCATOR, text)\n`;
+    }
+    // 3. Dropdowns (Select)
+    else if (tag === 'select') {
+        return `    @allure.step("Select '{text}' from ${el.name}")\n    def select_${el.name}(self, text):\n        self.select_dropdown_by_text(self.${el.name.toUpperCase()}_LOCATOR, text)\n`;
+    }
+    // 4. Default: Get Text
+    else {
         return `    @allure.step("Get ${el.name} text")\n    def get_${el.name}_text(self):\n        return self.get_text(self.${el.name.toUpperCase()}_LOCATOR)\n`;
     }
 }).join('\n')}
@@ -575,39 +635,25 @@ class Environment:
 
 const generateBaseTest = () => `"""
 Base Test class containing common setup and teardown methods.
-This class implements the foundation for all test classes.
 """
 import pytest
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options as ChromeOptions
-from selenium.webdriver.chrome.service import Service as ChromeService
-import allure
 import io
 import logging
-import time
-from pathlib import Path
-
-
+import allure
 from utils.logger import get_logger
 from config.environment import Environment
-
-# --- NEW: Define Project Root as a Global Constant ---
-# This is a robust way to get your project's root directory.
-# It assumes this file (base_test.py) is inside a 'tests' folder,
-# which is inside your project root.
-PROJECT_ROOT = Path(__file__).parent.parent
-
 
 class BaseTest:
     logger = get_logger()
 
     @pytest.fixture(scope="function", autouse=True)
-    def setup_and_teardown(self, request):
+    def setup_and_teardown(self, driver, request):
         """
-        Setup/teardown fixture. It no longer needs to calculate or pass paths.
+        Setup/teardown fixture. Uses the driver fixture from conftest.py
         """
         self.logger.info(f"--- Starting test: {request.node.name} ---")
 
+        # Capture logs
         log_stream = io.StringIO()
         stream_handler = logging.StreamHandler(log_stream)
         log_format = logging.Formatter('%(asctime)s - [%(levelname)s] - %(message)s')
@@ -615,100 +661,19 @@ class BaseTest:
         self.logger.addHandler(stream_handler)
 
         self.env = Environment()
-        self.driver = self._setup_driver()
+        self.driver = driver
+        # Make driver available to test class instance explicitly if needed
         request.cls.driver = self.driver
-
-        with allure.step("Browser Setup"):
-            self.driver.maximize_window()
-            self.driver.implicitly_wait(self.env.config['browser']['implicit_wait'])
-            # Check for page_load_timeout existence before setting
-            if 'page_load_timeout' in self.env.config['browser']:
-                self.driver.set_page_load_timeout(self.env.config['browser']['page_load_timeout'])
-
 
         yield
 
+        # Teardown logic
         with allure.step("Test Teardown"):
-            if request.node.rep_call.failed:
-                self._capture_allure_screenshot(request)
-
+            # Logs attachment
             log_content = log_stream.getvalue()
             allure.attach(log_content, name=f"Execution Log for {request.node.name}",
                           attachment_type=allure.attachment_type.TEXT)
             self.logger.removeHandler(stream_handler)
-
             self.logger.info(f"--- Finished test: {request.node.name} ---")
-            if self.driver:
-                self.driver.quit()
-
-    def _setup_driver(self):
-        """Sets up WebDriver. No longer needs arguments passed to it."""
-        # Check if 'default' key exists, otherwise fallback to root 'browser'
-        browser = self.env.config.get('browser', {}).get('default', self.env.config.get('browser', 'chrome')).lower()
-        if isinstance(browser, dict): browser = 'chrome' # Safety fallback
-        
-        headless = self.env.config.get('browser', {}).get('headless', self.env.config.get('headless', True))
-        
-        self.logger.info(f"Setting up '{browser}' browser (Headless: {headless})")
-        if browser == 'chrome':
-            return self._setup_chrome_driver(headless)
-        else:
-            self.logger.error(f"Unsupported browser: {browser}")
-            raise ValueError(f"Unsupported browser: {browser}")
-
-    def _setup_chrome_driver(self, headless=False):
-        """
-        Sets up Chrome WebDriver using your comprehensive list of options.
-        """
-        options = ChromeOptions()
-        options.page_load_strategy = 'eager'
-
-        # Use the PROJECT_ROOT constant defined at the top of the file
-        profile_path = PROJECT_ROOT / "automation_chrome_profile"
-        options.add_argument(f"--user-data-dir={profile_path}")
-        self.logger.info(f"Using dedicated Chrome profile: {profile_path}")
-
-        # --- ADDING YOUR SUGGESTED OPTIONS TO SUPPRESS POPUPS ---
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        prefs = {
-            "credentials_enable_service": False,
-            "profile.default_content_setting_values.notifications": 2,
-            "profile.password_manager_enabled": False,
-            "profile.password_manager_leak_detection": False
-        }
-        options.add_experimental_option("prefs", prefs)
-
-        if headless:
-            options.add_argument('--headless')
-
-        options.add_argument('--no-sandbox')
-        options.add_argument('--disable-dev-shm-usage')
-        options.add_argument('--window-size=1920,1080')
-        options.add_argument('--disable-blink-features=AutomationControlled')
-        options.add_argument('--disable-extensions')
-
-        service = ChromeService()
-        driver = webdriver.Chrome(service=service, options=options)
-        self.logger.info("Chrome WebDriver initialized with dedicated profile and popup suppression.")
-        return driver
-
-    def _capture_allure_screenshot(self, request):
-        """Captures a unique, timestamped screenshot for the Allure report."""
-        test_name = request.node.name
-        self.logger.error(f"Test '{test_name}' failed. Capturing Allure screenshot.")
-
-        timestamp = time.strftime("%Y%m%d_%H%M%S")
-        # Use the PROJECT_ROOT constant to build the absolute path
-        screenshot_folder = PROJECT_ROOT / "reports" / "screenshots"
-        screenshot_folder.mkdir(parents=True, exist_ok=True)
-        screenshot_path = screenshot_folder / f"failed_{test_name}_{timestamp}.png"
-
-        try:
-            time.sleep(1) # Short delay before screenshot
-            self.driver.save_screenshot(str(screenshot_path))
-            allure.attach.file(str(screenshot_path), name=f"Failure Screenshot: {test_name}",
-                             attachment_type=allure.attachment_type.PNG)
-            self.logger.info(f"Screenshot for Allure saved to: {screenshot_path}")
-        except Exception as e:
-            self.logger.error(f"Failed to capture Allure screenshot: {e}")
+            # Driver quit is handled by conftest fixture
 `;

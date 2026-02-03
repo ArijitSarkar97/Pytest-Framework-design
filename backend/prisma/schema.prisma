@@ -92,3 +92,38 @@ model TestStep {
   
   @@index([testId])
 }
+
+// POM Pages Feature Models
+model PomPageSet {
+  id        String     @id @default(uuid())
+  name      String
+  sourceUrl String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  pages     PomPage[]
+
+  @@index([createdAt])
+  @@index([name])
+}
+
+model PomPage {
+  id        String       @id @default(uuid())
+  pomSetId  String
+  name      String
+  pomSet    PomPageSet   @relation(fields: [pomSetId], references: [id], onDelete: Cascade)
+  elements  PomElement[]
+
+  @@index([pomSetId])
+}
+
+model PomElement {
+  id           String   @id @default(uuid())
+  pomPageId    String
+  name         String
+  locatorType  String
+  locatorValue String
+  description  String?
+  pomPage      PomPage  @relation(fields: [pomPageId], references: [id], onDelete: Cascade)
+
+  @@index([pomPageId])
+}
