@@ -2,22 +2,40 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import frameworkRoutes from './routes/frameworks';
-import pomPagesRoutes from './routes/pomPages';
+import pomPageRoutes from './routes/pomPages';
+import ragRoutes from './routes/rag';
+import executionRoutes from './routes/executions';
 // @ts-ignore
 import puppeteer from 'puppeteer';
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const port = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+const allowedOrigins = process.env.NODE_ENV === 'production'
+    ? [process.env.FRONTEND_URL || ''].filter(Boolean)
+    : ['http://localhost:3000', 'http://127.0.0.1:3000'];
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(null, true); // In production, tighten this to callback(new Error('CORS'))
+        }
+    },
+    credentials: true,
+}));
 app.use(express.json({ limit: '50mb' }));
 
 // Routes
 app.use('/api/frameworks', frameworkRoutes);
-app.use('/api/pom-pages', pomPagesRoutes);
+app.use('/api/pom-pages', pomPageRoutes);
+app.use('/api/rag', ragRoutes);
+app.use('/api/executions', executionRoutes);
 
 // Helper endpoint to fetch raw HTML (bypass CORS / context for AI)
 app.post('/api/fetch-url', async (req, res) => {
@@ -109,7 +127,7 @@ app.get('/health', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-    console.log(`🚀 Backend server running on http://localhost:${PORT}`);
-    console.log(`📊 API endpoints available at http://localhost:${PORT}/api/frameworks`);
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+    console.log(`📊 API endpoints available at http://localhost:${port}/api/frameworks`);
 });

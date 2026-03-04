@@ -1,0 +1,612 @@
+
+> pytest-architect-backend@1.0.0 dev
+> tsx watch src/index.ts
+
+Server running on port 3001
+📊 API endpoints available at http://localhost:3001/api/frameworks
+[Backend] Fetching URL with Puppeteer: https://testautomationpractice.blogspot.com/
+[Backend] Fetched 97327 bytes
+[Backend] Received run request for framework 11d6f8aa-a9d0-4206-8649-7aa816a8a037, files: 1
+[PytestRunner] executeTest called for 11d6f8aa-a9d0-4206-8649-7aa816a8a037 with 1 files
+[PytestRunner] Starting execution beddb6b3-fc9c-4430-a072-ce672bec5fa3 for project pytest-automation at /Users/arijitsarkar/Downloads/untitled folder/pytest-architect-ai/backend/generated/pytest-automation (Files: tests/test_functional_automation_testing_pra.py)
+[PytestRunner] Using system pytest
+[PytestRunner] stdout: ============================= test session starts ==============================
+platform darwin -- Python 3.14.0, pytest-7.4.3, pluggy-1.6.0 -- /usr/local/bin/python3.14
+cachedir: .pytest_cache
+metadata: {'Python': '3.14.0', 'Platform': 'macOS-26.3-arm64-arm-64bit-Mach-O', 'Packages': {'pytest': '7.4.3', 'pluggy': '1.6.0'}, 'Plugins': {'mock': '3.15.1', 'anyio': '4.12.0', 'html': '4.1.1', 'metadata': '3.1.1', 'xdist': '3.3.1', 'allure-pytest': '2.13.2'}, 'JAVA_HOME': '/Library/Java/JavaVirtualMachines/jdk-25.jdk/Contents/Home'}
+rootdir: /Users/arijitsarkar/Downloads/untitled folder/pytest-architect-ai/backend/generated/pytest-automation
+configfile: pytest.ini
+plugins: mock-3.15.1, anyio-4.12.0, html-4.1.1, metadata-3.1.1, xdist-3.3.1, allure-pytest-2.13.2
+collecting ... 
+[PytestRunner] stdout: collected 3 items
+
+tests/test_functional_automation_testing_pra.py::TestAutomationTestingPraPage::test_automation_testing_pra_page_fill_all_inputs 
+[PytestRunner] stdout: 
+-------------------------------- live log call ---------------------------------
+2026-02-26 01:40:56 [    INFO] Entering text 'test_data' into ('id', 'name') (base_page.py:48)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Fill name_input with valid data executed successfully (test_functional_automation_testing_pra.py:22)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Entering text 'test@example.com' into ('id', 'email') (base_page.py:48)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Fill email_input with valid data executed successfully (test_functional_automation_testing_pra.py:25)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Entering text 'test_data' into ('id', 'phone') (base_page.py:48)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Fill phone_input with valid data executed successfully (test_functional_automation_testing_pra.py:28)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Entering text 'test_data' into ('tag name', 'textarea') (base_page.py:48)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Fill textarea_textarea with valid data executed successfully (test_functional_automation_testing_pra.py:31)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Entering text 'test_data' into ('id', 'male') (base_page.py:48)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Fill male_input with valid data executed successfully (test_functional_automation_testing_pra.py:34)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Entering text 'test_data' into ('id', 'male') (base_page.py:48)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Fill female_input with valid data executed successfully (test_functional_automation_testing_pra.py:37)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Entering text 'test_data' into ('id', 'sunday') (base_page.py:48)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Fill sunday_input with valid data executed successfully (test_functional_automation_testing_pra.py:40)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Entering text 'test_data' into ('id', 'monday') (base_page.py:48)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Fill monday_input with valid data executed successfully (test_functional_automation_testing_pra.py:43)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Entering text 'test_data' into ('id', 'tuesday') (base_page.py:48)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Fill tuesday_input with valid data executed successfully (test_functional_automation_testing_pra.py:46)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Entering text 'test_data' into ('id', 'wednesday') (base_page.py:48)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Fill wednesday_input with valid data executed successfully (test_functional_automation_testing_pra.py:49)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Entering text 'test_data' into ('id', 'thursday') (base_page.py:48)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Fill thursday_input with valid data executed successfully (test_functional_automation_testing_pra.py:52)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Entering text 'test_data' into ('id', 'friday') (base_page.py:48)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Fill friday_input with valid data executed successfully (test_functional_automation_testing_pra.py:55)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Entering text 'test_data' into ('id', 'saturday') (base_page.py:48)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Fill saturday_input with valid data executed successfully (test_functional_automation_testing_pra.py:58)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Entering text 'test_data' into ('id', 'datepicker') (base_page.py:48)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Fill datepicker_input with valid data executed successfully (test_functional_automation_testing_pra.py:61)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Entering text 'test_data' into ('id', 'txtDate') (base_page.py:48)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Fill txtdate_input with valid data executed successfully (test_functional_automation_testing_pra.py:64)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Entering text 'test_data' into ('id', 'start-date') (base_page.py:48)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Fill start_date_input with valid data executed successfully (test_functional_automation_testing_pra.py:67)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Entering text 'test_data' into ('id', 'end-date') (base_page.py:48)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Fill end_date_input with valid data executed successfully (test_functional_automation_testing_pra.py:70)
+
+[PytestRunner] stdout: 2026-02-26 01:40:56 [    INFO] Entering text 'test_data' into ('id', 'singleFileInput') (base_page.py:48)
+
+[PytestRunner] stdout: FAILED                                                                   [ 33%]
+[PytestRunner] stdout: 
+tests/test_functional_automation_testing_pra.py::TestAutomationTestingPraPage::test_automation_testing_pra_page_button_interactions 
+[PytestRunner] stdout: 
+-------------------------------- live log call ---------------------------------
+2026-02-26 01:41:02 [    INFO] Clicking element: ('class name', 'submit-btn') (base_page.py:43)
+
+[PytestRunner] stdout: 2026-02-26 01:41:02 [    INFO] Click submit_button button executed successfully (test_functional_automation_testing_pra.py:118)
+
+[PytestRunner] stdout: 2026-02-26 01:41:02 [    INFO] Clicking element: ('xpath', "//button[normalize-space()='Upload Single File']") (base_page.py:43)
+
+[PytestRunner] stdout: 2026-02-26 01:41:02 [    INFO] Click upload_single_file_button button executed successfully (test_functional_automation_testing_pra.py:121)
+
+[PytestRunner] stdout: 2026-02-26 01:41:02 [    INFO] Clicking element: ('xpath', "//button[normalize-space()='Upload Multiple Files']") (base_page.py:43)
+
+[PytestRunner] stdout: 2026-02-26 01:41:02 [    INFO] Click upload_multiple_files_button button executed successfully (test_functional_automation_testing_pra.py:124)
+
+[PytestRunner] stdout: 2026-02-26 01:41:02 [    INFO] Clicking element: ('name', 'start') (base_page.py:43)
+
+[PytestRunner] stdout: 2026-02-26 01:41:02 [    INFO] Click start_button button executed successfully (test_functional_automation_testing_pra.py:127)
+
+[PytestRunner] stdout: 2026-02-26 01:41:02 [    INFO] Clicking element: ('id', 'alertBtn') (base_page.py:43)
+
+[PytestRunner] stdout: 2026-02-26 01:41:02 [    INFO] Click alertbtn_button button executed successfully (test_functional_automation_testing_pra.py:130)
+
+[PytestRunner] stdout: 2026-02-26 01:41:02 [    INFO] Clicking element: ('id', 'confirmBtn') (base_page.py:43)
+
+[PytestRunner] stdout: FAILED                                                                   [ 66%]
+[PytestRunner] stdout: 
+tests/test_functional_automation_testing_pra.py::TestAutomationTestingPraPage::test_automation_testing_pra_page_search_functionality 
+[PytestRunner] stdout: 
+-------------------------------- live log call ---------------------------------
+2026-02-26 01:41:08 [    INFO] Entering text 'Test Search Query' into ('xpath', '//*[@id="productTable"]/tbody/tr[1]/td[4]/input') (base_page.py:48)
+
+[PytestRunner] stdout: 2026-02-26 01:41:08 [    INFO] Type search query in wikipedia1_wikipedia_search_input_input executed successfully (test_functional_automation_testing_pra.py:172)
+
+[PytestRunner] stdout: PASSED                                                                   [100%]
+[PytestRunner] stdout: 
+
+=================================== FAILURES ===================================
+_ TestAutomationTestingPraPage.test_automation_testing_pra_page_fill_all_inputs _
+
+self = <tests.test_functional_automation_testing_pra.TestAutomationTestingPraPage object at 0x10c622850>
+driver = <selenium.webdriver.chrome.webdriver.WebDriver (session="46c4280f56c36f8d15a71d249f94870b")>
+config = {'browser': {'default': 'chrome', 'headless': False, 'implicit_wait': 10, 'page_load_timeout': 30}, 'environments': {'dev': {'base_url': 'https://testautomationpractice.blogspot.com/', 'password': 'password', 'username': 'admin'}}}
+
+    @allure.story("test_automation_testing_pra_page_fill_all_inputs")
+    @allure.title("test_automation_testing_pra_page_fill_all_inputs Execution")
+    @allure.severity(allure.severity_level.NORMAL)
+    @pytest.mark.functional
+    def test_automation_testing_pra_page_fill_all_inputs(self, driver, config):
+        # Initialize Page Objects
+        automationtestingprapage = AutomationTestingPraPage(driver)
+    
+        driver.get(config.get('environments', {}).get('dev', {}).get('base_url', ''))
+        with allure.step(f"1. Fill name_input with valid data \n"):
+            automationtestingprapage.fill_name_input("test_data")
+            self.logger.info("Fill name_input with valid data executed successfully")
+        with allure.step(f"2. Fill email_input with valid data \n"):
+            automationtestingprapage.fill_email_input("test@example.com")
+            self.logger.info("Fill email_input with valid data executed successfully")
+        with allure.step(f"3. Fill phone_input with valid data \n"):
+            automationtestingprapage.fill_phone_input("test_data")
+            self.logger.info("Fill phone_input with valid data executed successfully")
+        with allure.step(f"4. Fill textarea_textarea with valid data \n"):
+            automationtestingprapage.fill_textarea_textarea("test_data")
+            self.logger.info("Fill textarea_textarea with valid data executed successfully")
+        with allure.step(f"5. Fill male_input with valid data \n"):
+            automationtestingprapage.fill_male_input("test_data")
+            self.logger.info("Fill male_input with valid data executed successfully")
+        with allure.step(f"6. Fill female_input with valid data \n"):
+            automationtestingprapage.fill_male_input("test_data")
+            self.logger.info("Fill female_input with valid data executed successfully")
+        with allure.step(f"7. Fill sunday_input with valid data \n"):
+            automationtestingprapage.fill_sunday_input("test_data")
+            self.logger.info("Fill sunday_input with valid data executed successfully")
+        with allure.step(f"8. Fill monday_input with valid data \n"):
+            automationtestingprapage.fill_monday_input("test_data")
+            self.logger.info("Fill monday_input with valid data executed successfully")
+        with allure.step(f"9. Fill tuesday_input with valid data \n"):
+            automationtestingprapage.fill_tuesday_input("test_data")
+            self.logger.info("Fill tuesday_input with valid data executed successfully")
+        with allure.step(f"10. Fill wednesday_input with valid data \n"):
+            automationtestingprapage.fill_wednesday_input("test_data")
+            self.logger.info("Fill wednesday_input with valid data executed successfully")
+        with allure.step(f"11. Fill thursday_input with valid data \n"):
+            automationtestingprapage.fill_thursday_input("test_data")
+            self.logger.info("Fill thursday_input with valid data executed successfully")
+        with allure.step(f"12. Fill friday_input with valid data \n"):
+            automationtestingprapage.fill_friday_input("test_data")
+            self.logger.info("Fill friday_input with valid data executed successfully")
+        with allure.step(f"13. Fill saturday_input with valid data \n"):
+            automationtestingprapage.fill_saturday_input("test_data")
+            self.logger.info("Fill saturday_input with valid data executed successfully")
+        with allure.step(f"14. Fill datepicker_input with valid data \n"):
+            automationtestingprapage.fill_datepicker_input("test_data")
+            self.logger.info("Fill datepicker_input with valid data executed successfully")
+        with allure.step(f"15. Fill txtdate_input with valid data \n"):
+            automationtestingprapage.fill_txtdate_input("test_data")
+            self.logger.info("Fill txtdate_input with valid data executed successfully")
+        with allure.step(f"16. Fill start_date_input with valid data \n"):
+            automationtestingprapage.fill_start_date_input("test_data")
+            self.logger.info("Fill start_date_input with valid data executed successfully")
+        with allure.step(f"17. Fill end_date_input with valid data \n"):
+            automationtestingprapage.fill_end_date_input("test_data")
+            self.logger.info("Fill end_date_input with valid data executed successfully")
+        with allure.step(f"18. Fill singlefileinput_input with valid data \n"):
+>           automationtestingprapage.fill_singlefileinput_input("test_data")
+
+tests/test_functional_automation_testing_pra.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pages/automation_testing_pra_page.py:203: in fill_singlefileinput_input
+    self.enter_text(self.SINGLEFILEINPUT_INPUT_LOCATOR, text)
+pages/base_page.py:58: in enter_text
+    el.send_keys(text)
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/selenium/webdriver/remote/webelement.py:230: in send_keys
+    self._execute(
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/selenium/webdriver/remote/webelement.py:394: in _execute
+    return self._parent.execute(command, params)
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/selenium/webdriver/remote/webdriver.py:347: in execute
+    self.error_handler.check_response(response)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <selenium.webdriver.remote.errorhandler.ErrorHandler object at 0x10c7a4050>
+response = {'status': 400, 'value': '{"value":{"error":"invalid argument","message":"invalid argument: File not found : test_data...00019005bc08 _pthread_start + 136\\n16  libsystem_pthread.dylib             0x0000000190056ba8 thread_start + 8\\n"}}'}
+
+    def check_response(self, response: Dict[str, Any]) -> None:
+        """Checks that a JSON response from the WebDriver does not have an
+        error.
+    
+        :Args:
+         - response - The JSON response from the WebDriver server as a dictionary
+           object.
+    
+        :Raises: If the response contains an error message.
+        """
+        status = response.get("status", None)
+        if not status or status == ErrorCode.SUCCESS:
+            return
+        value = None
+        message = response.get("message", "")
+        screen: str = response.get("screen", "")
+        stacktrace = None
+        if isinstance(status, int):
+            value_json = response.get("value", None)
+            if value_json and isinstance(value_json, str):
+                import json
+    
+                try:
+                    value = json.loads(value_json)
+                    if len(value) == 1:
+                        value = value["value"]
+                    status = value.get("error", None)
+                    if not status:
+                        status = value.get("status", ErrorCode.UNKNOWN_ERROR)
+                        message = value.get("value") or value.get("message")
+                        if not isinstance(message, str):
+                            value = message
+                            message = message.get("message")
+                    else:
+                        message = value.get("message", None)
+                except ValueError:
+                    pass
+    
+        exception_class: Type[WebDriverException]
+        e = ErrorCode()
+        error_codes = [item for item in dir(e) if not item.startswith("__")]
+        for error_code in error_codes:
+            error_info = getattr(ErrorCode, error_code)
+            if isinstance(error_info, list) and status in error_info:
+                exception_class = getattr(ExceptionMapping, error_code, WebDriverException)
+                break
+        else:
+            exception_class = WebDriverException
+    
+        if not value:
+            value = response["value"]
+        if isinstance(value, str):
+            raise exception_class(value)
+        if message == "" and "message" in value:
+            message = value["message"]
+    
+        screen = None  # type: ignore[assignment]
+        if "screen" in value:
+            screen = value["screen"]
+    
+        stacktrace = None
+        st_value = value.get("stackTrace") or value.get("stacktrace")
+        if st_value:
+            if isinstance(st_value, str):
+                stacktrace = st_value.split("\n")
+            else:
+                stacktrace = []
+                try:
+                    for frame in st_value:
+                        line = frame.get("lineNumber", "")
+                        file = frame.get("fileName", "<anonymous>")
+                        if line:
+                            file = f"{file}:{line}"
+                        meth = frame.get("methodName", "<anonymous>")
+                        if "className" in frame:
+                            meth = f"{frame['className']}.{meth}"
+                        msg = "    at %s (%s)"
+                        msg = msg % (meth, file)
+                        stacktrace.append(msg)
+                except TypeError:
+                    pass
+        if exception_class == UnexpectedAlertPresentException:
+            alert_text = None
+            if "data" in value:
+                alert_text = value["data"].get("text")
+            elif "alert" in value:
+                alert_text = value["alert"].get("text")
+            raise exception_class(message, screen, stacktrace, alert_text)  # type: ignore[call-arg]  # mypy is not smart enough here
+>       raise exception_class(message, screen, stacktrace)
+E       selenium.common.exceptions.InvalidArgumentException: Message: invalid argument: File not found : test_data
+E         (Session info: chrome=145.0.7632.110)
+E       Stacktrace:
+E       0   chromedriver                        0x00000001013a96b4 cxxbridge1$str$ptr + 3127600
+E       1   chromedriver                        0x00000001013a1a50 cxxbridge1$str$ptr + 3095756
+E       2   chromedriver                        0x0000000100e7e56c _RNvCsdExgN8vFLbb_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 75432
+E       3   chromedriver                        0x0000000100ec1338 _RNvCsdExgN8vFLbb_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 349300
+E       4   chromedriver                        0x0000000100ebd25c _RNvCsdExgN8vFLbb_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 332696
+E       5   chromedriver                        0x0000000100f06620 _RNvCsdExgN8vFLbb_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 632668
+E       6   chromedriver                        0x0000000100ebbb9c _RNvCsdExgN8vFLbb_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 326872
+E       7   chromedriver                        0x0000000101368680 cxxbridge1$str$ptr + 2861308
+E       8   chromedriver                        0x000000010136bdd4 cxxbridge1$str$ptr + 2875472
+E       9   chromedriver                        0x000000010134da7c cxxbridge1$str$ptr + 2751736
+E       10  chromedriver                        0x000000010136c658 cxxbridge1$str$ptr + 2877652
+E       11  chromedriver                        0x000000010133dffc cxxbridge1$str$ptr + 2687608
+E       12  chromedriver                        0x0000000101390d78 cxxbridge1$str$ptr + 3026932
+E       13  chromedriver                        0x0000000101390ef4 cxxbridge1$str$ptr + 3027312
+E       14  chromedriver                        0x00000001013a16a8 cxxbridge1$str$ptr + 3094820
+E       15  libsystem_pthread.dylib             0x000000019005bc08 _pthread_start + 136
+E       16  libsystem_pthread.dylib             0x0000000190056ba8 thread_start + 8
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/selenium/webdriver/remote/errorhandler.py:229: InvalidArgumentException
+----------------------------- Captured stderr call -----------------------------
+[32mINFO    [0m [37mEntering text 'test_data' into ('id', 'name')[0m
+[32mINFO    [0m [37mFill name_input with valid data executed successfully[0m
+[32mINFO    [0m [37mEntering text 'test@example.com' into ('id', 'email')[0m
+[32mINFO    [0m [37mFill email_input with valid data executed successfully[0m
+[32mINFO    [0m [37mEntering text 'test_data' into ('id', 'phone')[0m
+[32mINFO    [0m [37mFill phone_input with valid data executed successfully[0m
+[32mINFO    [0m [37mEntering text 'test_data' into ('tag name', 'textarea')[0m
+[32mINFO    [0m [37mFill textarea_textarea with valid data executed successfully[0m
+[32mINFO    [0m [37mEntering text 'test_data' into ('id', 'male')[0m
+[32mINFO    [0m [37mFill male_input with valid data executed successfully[0m
+[32mINFO    [0m [37mEntering text 'test_data' into ('id', 'male')[0m
+[32mINFO    [0m [37mFill female_input with valid data executed successfully[0m
+[32mINFO    [0m [37mEntering text 'test_data' into ('id', 'sunday')[0m
+[32mINFO    [0m [37mFill sunday_input with valid data executed successfully[0m
+[32mINFO    [0m [37mEntering text 'test_data' into ('id', 'monday')[0m
+[32mINFO    [0m [37mFill monday_input with valid data executed successfully[0m
+[32mINFO    [0m [37mEntering text 'test_data' into ('id', 'tuesday')[0m
+[32mINFO    [0m [37mFill tuesday_input with valid data executed successfully[0m
+[32mINFO    [0m [37mEntering text 'test_data' into ('id', 'wednesday')[0m
+[32mINFO    [0m [37mFill wednesday_input with valid data executed successfully[0m
+[32mINFO    [0m [37mEntering text 'test_data' into ('id', 'thursday')[0m
+[32mINFO    [0m [37mFill thursday_input with valid data executed successfully[0m
+[32mINFO    [0m [37mEntering text 'test_data' into ('id', 'friday')[0m
+[32mINFO    [0m [37mFill friday_input with valid data executed successfully[0m
+[32mINFO    [0m [37mEntering text 'test_data' into ('id', 'saturday')[0m
+[32mINFO    [0m [37mFill saturday_input with valid data executed successfully[0m
+[32mINFO    [0m [37mEntering text 'test_data' into ('id', 'datepicker')[0m
+[32mINFO    [0m [37mFill datepicker_input with valid data executed successfully[0m
+[32mINFO    [0m [37mEntering text 'test_data' into ('id', 'txtDate')[0m
+[32mINFO    [0m [37mFill txtdate_input with valid data executed successfully[0m
+[32mINFO    [0m [37mEntering text 'test_data' into ('id', 'start-date')[0m
+[32mINFO    [0m [37mFill start_date_input with valid data executed successfully[0m
+[32mINFO    [0m [37mEntering text 'test_data' into ('id', 'end-date')[0m
+[32mINFO    [0m [37mFill end_date_input with valid data executed successfully[0m
+[32mINFO    [0m [37mEntering text 'test_data' into ('id', 'singleFileInput')[0m
+------------------------------ Captured log call -------------------------------
+INFO     AutomationTestingPraPage:base_page.py:48 Entering text 'test_data' into ('id', 'name')
+INFO     utils.logger:test_functional_automation_testing_pra.py:22 Fill name_input with valid data executed successfully
+INFO     AutomationTestingPraPage:base_page.py:48 Entering text 'test@example.com' into ('id', 'email')
+INFO     utils.logger:test_functional_automation_testing_pra.py:25 Fill email_input with valid data executed successfully
+INFO     AutomationTestingPraPage:base_page.py:48 Entering text 'test_data' into ('id', 'phone')
+INFO     utils.logger:test_functional_automation_testing_pra.py:28 Fill phone_input with valid data executed successfully
+INFO     AutomationTestingPraPage:base_page.py:48 Entering text 'test_data' into ('tag name', 'textarea')
+INFO     utils.logger:test_functional_automation_testing_pra.py:31 Fill textarea_textarea with valid data executed successfully
+INFO     AutomationTestingPraPage:base_page.py:48 Entering text 'test_data' into ('id', 'male')
+INFO     utils.logger:test_functional_automation_testing_pra.py:34 Fill male_input with valid data executed successfully
+INFO     AutomationTestingPraPage:base_page.py:48 Entering text 'test_data' into ('id', 'male')
+INFO     utils.logger:test_functional_automation_testing_pra.py:37 Fill female_input with valid data executed successfully
+INFO     AutomationTestingPraPage:base_page.py:48 Entering text 'test_data' into ('id', 'sunday')
+INFO     utils.logger:test_functional_automation_testing_pra.py:40 Fill sunday_input with valid data executed successfully
+INFO     AutomationTestingPraPage:base_page.py:48 Entering text 'test_data' into ('id', 'monday')
+INFO     utils.logger:test_functional_automation_testing_pra.py:43 Fill monday_input with valid data executed successfully
+INFO     AutomationTestingPraPage:base_page.py:48 Entering text 'test_data' into ('id', 'tuesday')
+INFO     utils.logger:test_functional_automation_testing_pra.py:46 Fill tuesday_input with valid data executed successfully
+INFO     AutomationTestingPraPage:base_page.py:48 Entering text 'test_data' into ('id', 'wednesday')
+INFO     utils.logger:test_functional_automation_testing_pra.py:49 Fill wednesday_input with valid data executed successfully
+INFO     AutomationTestingPraPage:base_page.py:48 Entering text 'test_data' into ('id', 'thursday')
+INFO     utils.logger:test_functional_automation_testing_pra.py:52 Fill thursday_input with valid data executed successfully
+INFO     AutomationTestingPraPage:base_page.py:48 Entering text 'test_data' into ('id', 'friday')
+INFO     utils.logger:test_functional_automation_testing_pra.py:55 Fill friday_input with valid data executed successfully
+INFO     AutomationTestingPraPage:base_page.py:48 Entering text 'test_data' into ('id', 'saturday')
+INFO     utils.logger:test_functional_automation_testing_pra.py:58 Fill saturday_input with valid data executed successfully
+INFO     AutomationTestingPraPage:base_page.py:48 Entering text 'test_data' into ('id', 'datepicker')
+INFO     utils.logger:test_functional_automation_testing_pra.py:61 Fill datepicker_input with valid data executed successfully
+INFO     AutomationTestingPraPage:base_page.py:48 Entering text 'test_data' into ('id', 'txtDate')
+INFO     utils.logger:test_functional_automation_testing_pra.py:64 Fill txtdate_input with valid data executed successfully
+INFO     AutomationTestingPraPage:base_page.py:48 Entering text 'test_data' into ('id', 'start-date')
+INFO     utils.logger:test_functional_automation_testing_pra.py:67 Fill start_date_input with valid data executed successfully
+INFO     AutomationTestingPraPage:base_page.py:48 Entering text 'test_data' into ('id', 'end-date')
+INFO     utils.logger:test_functional_automation_testing_pra.py:70 Fill end_date_input with valid data executed successfully
+INFO     AutomationTestingPraPage:base_page.py:48 Entering text 'test_data' into ('id', 'singleFileInput')
+_ TestAutomationTestingPraPage.test_automation_testing_pra_page_button_interactions _
+
+self = <tests.test_functional_automation_testing_pra.TestAutomationTestingPraPage object at 0x10c748410>
+driver = <selenium.webdriver.chrome.webdriver.WebDriver (session="84e5d4ad893e5222372fc610591ba556")>
+config = {'browser': {'default': 'chrome', 'headless': False, 'implicit_wait': 10, 'page_load_timeout': 30}, 'environments': {'dev': {'base_url': 'https://testautomationpractice.blogspot.com/', 'password': 'password', 'username': 'admin'}}}
+
+    @allure.story("test_automation_testing_pra_page_button_interactions")
+    @allure.title("test_automation_testing_pra_page_button_interactions Execution")
+    @allure.severity(allure.severity_level.NORMAL)
+    @pytest.mark.functional
+    def test_automation_testing_pra_page_button_interactions(self, driver, config):
+        # Initialize Page Objects
+        automationtestingprapage = AutomationTestingPraPage(driver)
+    
+        driver.get(config.get('environments', {}).get('dev', {}).get('base_url', ''))
+        with allure.step(f"1. Click submit_button button \n"):
+            automationtestingprapage.click_submit_button()
+            self.logger.info("Click submit_button button executed successfully")
+        with allure.step(f"2. Click upload_single_file_button button \n"):
+            automationtestingprapage.click_upload_single_file_button()
+            self.logger.info("Click upload_single_file_button button executed successfully")
+        with allure.step(f"3. Click upload_multiple_files_button button \n"):
+            automationtestingprapage.click_upload_multiple_files_button()
+            self.logger.info("Click upload_multiple_files_button button executed successfully")
+        with allure.step(f"4. Click start_button button \n"):
+            automationtestingprapage.click_start_button()
+            self.logger.info("Click start_button button executed successfully")
+        with allure.step(f"5. Click alertbtn_button button \n"):
+            automationtestingprapage.click_alertbtn_button()
+            self.logger.info("Click alertbtn_button button executed successfully")
+        with allure.step(f"6. Click confirmbtn_button button \n"):
+>           automationtestingprapage.click_confirmbtn_button()
+
+tests/test_functional_automation_testing_pra.py:132: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pages/automation_testing_pra_page.py:255: in click_confirmbtn_button
+    self.click(self.CONFIRMBTN_BUTTON_LOCATOR)
+pages/base_page.py:44: in click
+    self.find_element(locator).click()
+pages/base_page.py:37: in find_element
+    return WebDriverWait(self.driver, self.timeout).until(
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/selenium/webdriver/support/wait.py:92: in until
+    value = method(self._driver)
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/selenium/webdriver/support/expected_conditions.py:150: in _predicate
+    return _element_if_visible(driver.find_element(*locator))
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/selenium/webdriver/remote/webdriver.py:741: in find_element
+    return self.execute(Command.FIND_ELEMENT, {"using": by, "value": value})["value"]
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/selenium/webdriver/remote/webdriver.py:347: in execute
+    self.error_handler.check_response(response)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <selenium.webdriver.remote.errorhandler.ErrorHandler object at 0x10c74aad0>
+response = {'status': 500, 'value': '{"value":{"data":{"text":"I am an alert box!"},"error":"unexpected alert open","message":"un...00019005bc08 _pthread_start + 136\\n14  libsystem_pthread.dylib             0x0000000190056ba8 thread_start + 8\\n"}}'}
+
+    def check_response(self, response: Dict[str, Any]) -> None:
+        """Checks that a JSON response from the WebDriver does not have an
+        error.
+    
+        :Args:
+         - response - The JSON response from the WebDriver server as a dictionary
+           object.
+    
+        :Raises: If the response contains an error message.
+        """
+        status = response.get("status", None)
+        if not status or status == ErrorCode.SUCCESS:
+            return
+        value = None
+        message = response.get("message", "")
+        screen: str = response.get("screen", "")
+        stacktrace = None
+        if isinstance(status, int):
+            value_json = response.get("value", None)
+            if value_json and isinstance(value_json, str):
+                import json
+    
+                try:
+                    value = json.loads(value_json)
+                    if len(value) == 1:
+                        value = value["value"]
+                    status = value.get("error", None)
+                    if not status:
+                        status = value.get("status", ErrorCode.UNKNOWN_ERROR)
+                        message = value.get("value") or value.get("message")
+                        if not isinstance(message, str):
+                            value = message
+                            message = message.get("message")
+                    else:
+                        message = value.get("message", None)
+                except ValueError:
+                    pass
+    
+        exception_class: Type[WebDriverException]
+        e = ErrorCode()
+        error_codes = [item for item in dir(e) if not item.startswith("__")]
+        for error_code in error_codes:
+            error_info = getattr(ErrorCode, error_code)
+            if isinstance(error_info, list) and status in error_info:
+                exception_class = getattr(ExceptionMapping, error_code, WebDriverException)
+                break
+        else:
+            exception_class = WebDriverException
+    
+        if not value:
+            value = response["value"]
+        if isinstance(value, str):
+            raise exception_class(value)
+        if message == "" and "message" in value:
+            message = value["message"]
+    
+        screen = None  # type: ignore[assignment]
+        if "screen" in value:
+            screen = value["screen"]
+    
+        stacktrace = None
+        st_value = value.get("stackTrace") or value.get("stacktrace")
+        if st_value:
+            if isinstance(st_value, str):
+                stacktrace = st_value.split("\n")
+            else:
+                stacktrace = []
+                try:
+                    for frame in st_value:
+                        line = frame.get("lineNumber", "")
+                        file = frame.get("fileName", "<anonymous>")
+                        if line:
+                            file = f"{file}:{line}"
+                        meth = frame.get("methodName", "<anonymous>")
+                        if "className" in frame:
+                            meth = f"{frame['className']}.{meth}"
+                        msg = "    at %s (%s)"
+                        msg = msg % (meth, file)
+                        stacktrace.append(msg)
+                except TypeError:
+                    pass
+        if exception_class == UnexpectedAlertPresentException:
+            alert_text = None
+            if "data" in value:
+                alert_text = value["data"].get("text")
+            elif "alert" in value:
+                alert_text = value["alert"].get("text")
+>           raise exception_class(message, screen, stacktrace, alert_text)  # type: ignore[call-arg]  # mypy is not smart enough here
+E           selenium.common.exceptions.UnexpectedAlertPresentException: Alert Text: I am an alert box!
+E           Message: unexpected alert open: {Alert text : I am an alert box!}
+E             (Session info: chrome=145.0.7632.110)
+E           Stacktrace:
+E           0   chromedriver                        0x00000001032796b4 cxxbridge1$str$ptr + 3127600
+E           1   chromedriver                        0x0000000103271a50 cxxbridge1$str$ptr + 3095756
+E           2   chromedriver                        0x0000000102d4e56c _RNvCsdExgN8vFLbb_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 75432
+E           3   chromedriver                        0x0000000102dd6df8 _RNvCsdExgN8vFLbb_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 634676
+E           4   chromedriver                        0x0000000102d8bb9c _RNvCsdExgN8vFLbb_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 326872
+E           5   chromedriver                        0x0000000103238680 cxxbridge1$str$ptr + 2861308
+E           6   chromedriver                        0x000000010323bdd4 cxxbridge1$str$ptr + 2875472
+E           7   chromedriver                        0x000000010321da7c cxxbridge1$str$ptr + 2751736
+E           8   chromedriver                        0x000000010323c658 cxxbridge1$str$ptr + 2877652
+E           9   chromedriver                        0x000000010320dffc cxxbridge1$str$ptr + 2687608
+E           10  chromedriver                        0x0000000103260d78 cxxbridge1$str$ptr + 3026932
+E           11  chromedriver                        0x0000000103260ef4 cxxbridge1$str$ptr + 3027312
+E           12  chromedriver                        0x00000001032716a8 cxxbridge1$str$ptr + 3094820
+E           13  libsystem_pthread.dylib             0x000000019005bc08 _pthread_start + 136
+E           14  libsystem_pthread.dylib             0x0000000190056ba8 thread_start + 8
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/selenium/webdriver/remote/errorhandler.py:228: UnexpectedAlertPresentException
+----------------------------- Captured stderr call -----------------------------
+[32mINFO    [0m [37mClicking element: ('class name', 'submit-btn')[0m
+[32mINFO    [0m [37mClick submit_button button executed successfully[0m
+[32mINFO    [0m [37mClicking element: ('xpath', "//button[normalize-space()='Upload Single File']")[0m
+[32mINFO    [0m [37mClick upload_single_file_button button executed successfully[0m
+[32mINFO    [0m [37mClicking element: ('xpath', "//button[normalize-space()='Upload Multiple Files']")[0m
+[32mINFO    [0m [37mClick upload_multiple_files_button button executed successfully[0m
+[32mINFO    [0m [37mClicking element: ('name', 'start')[0m
+[32mINFO    [0m [37mClick start_button button executed successfully[0m
+[32mINFO    [0m [37mClicking element: ('id', 'alertBtn')[0m
+[32mINFO    [0m [37mClick alertbtn_button button executed successfully[0m
+[32mINFO    [0m [37mClicking element: ('id', 'confirmBtn')[0m
+------------------------------ Captured log call -------------------------------
+INFO     AutomationTestingPraPage:base_page.py:43 Clicking element: ('class name', 'submit-btn')
+INFO     utils.logger:test_functional_automation_testing_pra.py:118 Click submit_button button executed successfully
+INFO     AutomationTestingPraPage:base_page.py:43 Clicking element: ('xpath', "//button[normalize-space()='Upload Single File']")
+INFO     utils.logger:test_functional_automation_testing_pra.py:121 Click upload_single_file_button button executed successfully
+INFO     AutomationTestingPraPage:base_page.py:43 Clicking element: ('xpath', "//button[normalize-space()='Upload Multiple Files']")
+INFO     utils.logger:test_functional_automation_testing_pra.py:124 Click upload_multiple_files_button button executed successfully
+INFO     AutomationTestingPraPage:base_page.py:43 Clicking element: ('name', 'start')
+INFO     utils.logger:test_functional_automation_testing_pra.py:127 Click start_button button executed successfully
+INFO     AutomationTestingPraPage:base_page.py:43 Clicking element: ('id', 'alertBtn')
+INFO     utils.logger:test_functional_automation_testing_pra.py:130 Click alertbtn_button button executed successfully
+INFO     AutomationTestingPraPage:base_page.py:43 Clicking element: ('id', 'confirmBtn')
+=============================== warnings summary ===============================
+tests/test_functional_automation_testing_pra.py:14
+  /Users/arijitsarkar/Downloads/untitled folder/pytest-architect-ai/backend/generated/pytest-automation/tests/test_functional_automation_testing_pra.py:14: PytestUnknownMarkWarning: Unknown pytest.mark.functional - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.functional
+
+tests/test_functional_automation_testing_pra.py:110
+  /Users/arijitsarkar/Downloads/untitled folder/pytest-architect-ai/backend/generated/pytest-automation/tests/test_functional_automation_testing_pra.py:110: PytestUnknownMarkWarning: Unknown pytest.mark.functional - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.functional
+
+tests/test_functional_automation_testing_pra.py:164
+  /Users/arijitsarkar/Downloads/untitled folder/pytest-architect-ai/backend/generated/pytest-automation/tests/test_functional_automation_testing_pra.py:164: PytestUnknownMarkWarning: Unknown pytest.mark.functional - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.functional
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+- generated xml file: /Users/arijitsarkar/Downloads/untitled folder/pytest-architect-ai/backend/generated/pytest-automation/report-beddb6b3-fc9c-4430-a072-ce672bec5fa3.xml -
+=========================== short test summary info ============================
+FAILED tests/test_functional_automation_testing_pra.py::TestAutomationTestingPraPage::test_automation_testing_pra_page_fill_all_inputs
+FAILED tests/test_functional_automation_testing_pra.py::TestAutomationTestingPraPage::test_automation_testing_pra_page_button_interactions
+=================== 2 failed, 1 passed, 3 warnings in 17.78s ===================
+
+[PytestRunner] Process exited with code 1

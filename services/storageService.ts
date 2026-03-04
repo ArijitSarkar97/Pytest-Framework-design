@@ -1,4 +1,4 @@
-import { AutomationProject } from '../types';
+import { AutomationProject } from '../shared/types';
 
 export interface SavedFramework {
     id: string;

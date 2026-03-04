@@ -1,4 +1,4 @@
-import { AutomationProject } from '../types';
+import { AutomationProject } from '../shared/types';
 
 
 const getApiUrl = () => {
@@ -122,5 +122,60 @@ export const apiService = {
         }
         const data = await response.json();
         return data.html || '';
+    },
+
+    generateRagTest: async (url: string, requirement: string, apiKey?: string): Promise<string> => {
+        const response = await fetch(`${getApiUrl()}/api/rag/generate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url, requirement, apiKey })
+        });
+
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ error: 'Unknown error' }));
+            throw new Error(err.details || err.error || 'Failed to generate RAG test');
+        }
+
+        const data = await response.json();
+        return data.code;
+    },
+
+    generateComprehensiveTest: async (url: string, requirement: string, apiKey?: string): Promise<string> => {
+        const response = await fetch(`${getApiUrl()}/api/rag/generate-comprehensive`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url, requirement, apiKey })
+        });
+
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ error: 'Unknown error' }));
+            throw new Error(err.details || err.error || 'Failed to generate comprehensive test');
+        }
+
+        const data = await response.json();
+        return data.code;
+    },
+
+    generateTemplateTest: async (url: string, testTypes: string, pageName: string): Promise<{ code: string; tests?: any[] }> => {
+        // Helper to validate inputs
+        if (!url) throw new Error('URL is required');
+        if (!testTypes) throw new Error('Test types are required');
+        if (!pageName) throw new Error('Page name is required');
+
+        const requestBody = { url, testTypes, pageName };
+        console.log('[API SERVICE] Sending generate-template request:', JSON.stringify(requestBody, null, 2));
+
+        const response = await fetch(`${getApiUrl()}/api/rag/generate-template`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ error: 'Unknown error' }));
+            throw new Error(err.details || err.error || 'Failed to generate template test');
+        }
+
+        return response.json();
     }
 };

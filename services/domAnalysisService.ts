@@ -1,5 +1,5 @@
-import { TEST_PATTERNS } from './testPatterns';
-import { AutomationProject, PageDefinition, TestCase, ElementDefinition } from "../types";
+import { TEST_PATTERNS } from '../shared/testPatterns';
+import { AutomationProject, PageDefinition, TestCase, ElementDefinition } from "../shared/types";
 
 // --- SelectorsHub Strategy Constants ---
 const ATTRIBUTE_PRIORITY = [
@@ -296,16 +296,47 @@ export const analyzeDomAndGenerateSchema = async (
         }
     });
 
-    // --- Intelligent Test Generation Logic ---
+    // --- Intelligent Test Generation Logic (All 8 Types) ---
     const generatedTests: TestCase[] = [];
     const snakePage = derivedName.split(/(?=[A-Z])/).join('_').toLowerCase();
 
-    // heuristic: Detect Login Flow
+    // Classify elements for heuristics
+    const inputElements = elements.filter(e => e.tagName === 'input' || e.tagName === 'textarea' || e.name.includes('input'));
+    const buttonElements = elements.filter(e => e.tagName === 'button' || e.name.includes('btn') || e.name.includes('button') || e.name.includes('submit'));
+    const linkElements = elements.filter(e => e.tagName === 'a' || e.name.includes('link'));
     const userInputs = elements.filter(e => e.name.includes('user') || e.name.includes('email') || e.name.includes('login'));
     const passInputs = elements.filter(e => e.name.includes('pass'));
     const submitBtns = elements.filter(e => e.name.includes('submit') || e.name.includes('login') || e.name.includes('sign_in'));
+    const searchInputs = elements.filter(e => e.name.includes('search') || e.name.includes('query'));
+    const hasLoginFlow = userInputs.length > 0 && passInputs.length > 0 && submitBtns.length > 0;
 
-    if (userInputs.length > 0 && passInputs.length > 0 && submitBtns.length > 0) {
+    // ====================== 1. SMOKE TESTS ======================
+    // Page load + key element visibility
+    generatedTests.push({
+        id: crypto.randomUUID(),
+        name: `test_${snakePage}_page_loads`,
+        type: "smoke",
+        steps: [
+            { id: crypto.randomUUID(), action: 'navigate', value: url, description: `Navigate to ${url}` },
+            { id: crypto.randomUUID(), action: 'assert_text', value: '', description: 'Verify page title is not empty' },
+        ]
+    });
+
+    if (elements.length > 0) {
+        generatedTests.push({
+            id: crypto.randomUUID(),
+            name: `test_${snakePage}_key_elements_visible`,
+            type: "smoke",
+            steps: elements.slice(0, 5).map(el => ({
+                id: crypto.randomUUID(),
+                action: 'assert_visible' as const,
+                value: el.name,
+                description: `Verify ${el.name} is visible on page`
+            }))
+        });
+    }
+
+    if (hasLoginFlow) {
         generatedTests.push({
             id: crypto.randomUUID(),
             name: `test_${snakePage}_login_flow`,
@@ -319,33 +350,312 @@ export const analyzeDomAndGenerateSchema = async (
         });
     }
 
-    // heuristic: Detect Search Flow
-    const searchInputs = elements.filter(e => e.name.includes('search') || e.name.includes('query'));
+    // ====================== 2. FUNCTIONAL TESTS ======================
+    // Test each input field with valid data
+    if (inputElements.length > 0) {
+        generatedTests.push({
+            id: crypto.randomUUID(),
+            name: `test_${snakePage}_fill_all_inputs`,
+            type: "functional",
+            steps: inputElements.map(el => ({
+                id: crypto.randomUUID(),
+                action: 'input' as const,
+                value: el.name.includes('email') ? 'test@example.com' : el.name.includes('pass') ? 'TestPass123!' : 'test_data',
+                description: `Fill ${el.name} with valid data`
+            }))
+        });
+    }
+
+    // Test button clicks
+    if (buttonElements.length > 0) {
+        generatedTests.push({
+            id: crypto.randomUUID(),
+            name: `test_${snakePage}_button_interactions`,
+            type: "functional",
+            steps: buttonElements.map(el => ({
+                id: crypto.randomUUID(),
+                action: 'click' as const,
+                value: '',
+                description: `Click ${el.name} button`
+            }))
+        });
+    }
+
+    // Search flow
     if (searchInputs.length > 0) {
         generatedTests.push({
             id: crypto.randomUUID(),
-            name: `test_${snakePage}_search`,
-            type: "regression",
+            name: `test_${snakePage}_search_functionality`,
+            type: "functional",
             steps: [
-                { id: crypto.randomUUID(), action: 'input', value: 'Test Item', description: `Type search query in ${searchInputs[0].name}` },
-                { id: crypto.randomUUID(), action: 'click', value: 'Enter', description: 'Submit search' },
+                { id: crypto.randomUUID(), action: 'input', value: 'Test Search Query', description: `Type search query in ${searchInputs[0].name}` },
+                { id: crypto.randomUUID(), action: 'click', value: '', description: 'Submit search' },
                 { id: crypto.randomUUID(), action: 'assert_visible', value: 'results', description: 'Verify results appear' }
             ]
         });
     }
 
-    // If no specific flows detected, fallback to Generic Smoke
-    if (generatedTests.length === 0 && elements.length > 0) {
+    // ====================== 3. NEGATIVE TESTS ======================
+    // Empty form submission
+    if (submitBtns.length > 0 && inputElements.length > 0) {
         generatedTests.push({
             id: crypto.randomUUID(),
-            name: `test_${snakePage}_basic_interactions`,
-            type: "smoke",
-            steps: elements.slice(0, 4).map(el => ({
+            name: `test_${snakePage}_empty_form_submit`,
+            type: "negative",
+            steps: [
+                { id: crypto.randomUUID(), action: 'click', value: '', description: `Click ${submitBtns[0].name} without filling any fields` },
+                { id: crypto.randomUUID(), action: 'assert_visible', value: 'error', description: 'Verify validation error is shown' }
+            ]
+        });
+    }
+
+    // Invalid data in inputs
+    if (inputElements.length > 0) {
+        const invalidData = [
+            { label: 'special_chars', value: '!@#$%^&*()' },
+            { label: 'long_string', value: 'a'.repeat(256) },
+            { label: 'numeric_only', value: '999999' },
+        ];
+        invalidData.forEach(({ label, value }) => {
+            generatedTests.push({
                 id: crypto.randomUUID(),
-                action: el.name.includes('input') ? 'input' : 'click',
-                value: el.name.includes('input') ? 'test_data' : undefined,
-                description: `Interact with ${el.name}`
+                name: `test_${snakePage}_invalid_input_${label}`,
+                type: "negative",
+                steps: [
+                    ...inputElements.slice(0, 2).map(el => ({
+                        id: crypto.randomUUID(),
+                        action: 'input' as const,
+                        value: value,
+                        description: `Enter ${label} "${value.substring(0, 30)}" into ${el.name}`
+                    })),
+                    ...(submitBtns.length > 0 ? [{
+                        id: crypto.randomUUID(),
+                        action: 'click' as const,
+                        value: '',
+                        description: `Click ${submitBtns[0].name}`
+                    }] : []),
+                    { id: crypto.randomUUID(), action: 'assert_visible' as const, value: 'error', description: 'Verify application handles invalid input gracefully' }
+                ]
+            });
+        });
+    }
+
+    // ====================== 4. SECURITY TESTS ======================
+    // XSS injection
+    if (inputElements.length > 0) {
+        const xssPayloads = [
+            "<script>alert('XSS')</script>",
+            "<img src=x onerror=alert(1)>",
+            "'\"><script>alert(1)</script>",
+        ];
+        generatedTests.push({
+            id: crypto.randomUUID(),
+            name: `test_${snakePage}_xss_injection`,
+            type: "security",
+            steps: xssPayloads.flatMap((payload, idx) => [
+                { id: crypto.randomUUID(), action: 'input' as const, value: payload, description: `Inject XSS payload #${idx + 1} into ${inputElements[0].name}` },
+                { id: crypto.randomUUID(), action: 'assert_text' as const, value: 'no_alert', description: `Verify XSS payload #${idx + 1} is sanitized` }
+            ])
+        });
+
+        // SQL injection
+        generatedTests.push({
+            id: crypto.randomUUID(),
+            name: `test_${snakePage}_sql_injection`,
+            type: "security",
+            steps: [
+                { id: crypto.randomUUID(), action: 'input', value: "' OR 1=1 --", description: `Inject SQL payload into ${inputElements[0].name}` },
+                ...(submitBtns.length > 0 ? [{ id: crypto.randomUUID(), action: 'click' as const, value: '', description: `Click ${submitBtns[0].name}` }] : []),
+                { id: crypto.randomUUID(), action: 'assert_visible', value: 'error', description: 'Verify SQL injection does not bypass authentication' }
+            ]
+        });
+    }
+
+    // Password masking check
+    if (passInputs.length > 0) {
+        generatedTests.push({
+            id: crypto.randomUUID(),
+            name: `test_${snakePage}_password_masking`,
+            type: "security",
+            steps: [
+                { id: crypto.randomUUID(), action: 'assert_text', value: 'password', description: `Verify ${passInputs[0].name} input type is password (masked)` },
+            ]
+        });
+    }
+
+    // ====================== 5. PERFORMANCE TESTS ======================
+    generatedTests.push({
+        id: crypto.randomUUID(),
+        name: `test_${snakePage}_page_load_time`,
+        type: "performance",
+        steps: [
+            { id: crypto.randomUUID(), action: 'navigate', value: url, description: `Navigate to ${url}` },
+            { id: crypto.randomUUID(), action: 'assert_text', value: '5000', description: 'Verify page loads within 5 seconds' }
+        ]
+    });
+
+    generatedTests.push({
+        id: crypto.randomUUID(),
+        name: `test_${snakePage}_dom_content_loaded`,
+        type: "performance",
+        steps: [
+            { id: crypto.randomUUID(), action: 'navigate', value: url, description: `Navigate to ${url}` },
+            { id: crypto.randomUUID(), action: 'assert_text', value: '3000', description: 'Verify DOM content is interactive within 3 seconds' }
+        ]
+    });
+
+    if (inputElements.length > 0) {
+        generatedTests.push({
+            id: crypto.randomUUID(),
+            name: `test_${snakePage}_input_responsiveness`,
+            type: "performance",
+            steps: [
+                { id: crypto.randomUUID(), action: 'input', value: 'performance test', description: `Type into ${inputElements[0].name} and measure responsiveness` },
+                { id: crypto.randomUUID(), action: 'assert_text', value: 'responsive', description: 'Verify input responds within acceptable time' }
+            ]
+        });
+    }
+
+    // ====================== 6. ACCESSIBILITY TESTS ======================
+    generatedTests.push({
+        id: crypto.randomUUID(),
+        name: `test_${snakePage}_images_have_alt_text`,
+        type: "accessibility",
+        steps: [
+            { id: crypto.randomUUID(), action: 'assert_text', value: 'alt', description: 'Verify all images have alt text attributes' }
+        ]
+    });
+
+    if (inputElements.length > 0) {
+        generatedTests.push({
+            id: crypto.randomUUID(),
+            name: `test_${snakePage}_inputs_have_labels`,
+            type: "accessibility",
+            steps: [
+                { id: crypto.randomUUID(), action: 'assert_text', value: 'label', description: 'Verify all input fields have associated labels or aria-label' }
+            ]
+        });
+    }
+
+    generatedTests.push({
+        id: crypto.randomUUID(),
+        name: `test_${snakePage}_keyboard_navigation`,
+        type: "accessibility",
+        steps: [
+            { id: crypto.randomUUID(), action: 'assert_text', value: 'tab', description: 'Verify all interactive elements are reachable via Tab key' }
+        ]
+    });
+
+    generatedTests.push({
+        id: crypto.randomUUID(),
+        name: `test_${snakePage}_heading_hierarchy`,
+        type: "accessibility",
+        steps: [
+            { id: crypto.randomUUID(), action: 'assert_text', value: 'heading', description: 'Verify heading tags follow proper hierarchy (h1 > h2 > h3)' }
+        ]
+    });
+
+    generatedTests.push({
+        id: crypto.randomUUID(),
+        name: `test_${snakePage}_aria_landmarks`,
+        type: "accessibility",
+        steps: [
+            { id: crypto.randomUUID(), action: 'assert_text', value: 'aria', description: 'Verify ARIA landmark roles are present on the page' }
+        ]
+    });
+
+    // ====================== 7. INTEGRATION TESTS ======================
+    // Form submission flow
+    if (inputElements.length > 0 && submitBtns.length > 0) {
+        generatedTests.push({
+            id: crypto.randomUUID(),
+            name: `test_${snakePage}_form_submission`,
+            type: "integration",
+            steps: [
+                ...inputElements.slice(0, 3).map(el => ({
+                    id: crypto.randomUUID(),
+                    action: 'input' as const,
+                    value: 'integration_test_data',
+                    description: `Fill ${el.name} with test data`
+                })),
+                { id: crypto.randomUUID(), action: 'click', value: '', description: `Submit form via ${submitBtns[0].name}` },
+                { id: crypto.randomUUID(), action: 'assert_visible', value: 'response', description: 'Verify form submission produces expected response' }
+            ]
+        });
+    }
+
+    // Navigation links validation
+    if (linkElements.length > 0) {
+        generatedTests.push({
+            id: crypto.randomUUID(),
+            name: `test_${snakePage}_navigation_links`,
+            type: "integration",
+            steps: linkElements.slice(0, 5).map(el => ({
+                id: crypto.randomUUID(),
+                action: 'click' as const,
+                value: '',
+                description: `Click ${el.name} link and verify it resolves`
             }))
+        });
+    }
+
+    // Console errors check
+    generatedTests.push({
+        id: crypto.randomUUID(),
+        name: `test_${snakePage}_no_console_errors`,
+        type: "integration",
+        steps: [
+            { id: crypto.randomUUID(), action: 'navigate', value: url, description: `Navigate to ${url}` },
+            { id: crypto.randomUUID(), action: 'assert_text', value: 'no_errors', description: 'Verify no JavaScript console errors on page load' }
+        ]
+    });
+
+    // ====================== 8. REGRESSION TESTS ======================
+    generatedTests.push({
+        id: crypto.randomUUID(),
+        name: `test_${snakePage}_element_count_baseline`,
+        type: "regression",
+        steps: [
+            { id: crypto.randomUUID(), action: 'assert_text', value: String(elements.length), description: `Verify page has expected ${elements.length} interactive elements` }
+        ]
+    });
+
+    generatedTests.push({
+        id: crypto.randomUUID(),
+        name: `test_${snakePage}_page_title_consistency`,
+        type: "regression",
+        steps: [
+            { id: crypto.randomUUID(), action: 'navigate', value: url, description: `Navigate to ${url}` },
+            { id: crypto.randomUUID(), action: 'assert_text', value: derivedName, description: `Verify page title matches expected: ${derivedName}` }
+        ]
+    });
+
+    // All locators still valid
+    if (elements.length > 0) {
+        generatedTests.push({
+            id: crypto.randomUUID(),
+            name: `test_${snakePage}_locators_still_valid`,
+            type: "regression",
+            steps: elements.slice(0, 8).map(el => ({
+                id: crypto.randomUUID(),
+                action: 'assert_visible' as const,
+                value: el.name,
+                description: `Verify locator for ${el.name} is still valid`
+            }))
+        });
+    }
+
+    // Search regression
+    if (searchInputs.length > 0) {
+        generatedTests.push({
+            id: crypto.randomUUID(),
+            name: `test_${snakePage}_search_regression`,
+            type: "regression",
+            steps: [
+                { id: crypto.randomUUID(), action: 'input', value: 'Test Item', description: `Type search query in ${searchInputs[0].name}` },
+                { id: crypto.randomUUID(), action: 'click', value: 'Enter', description: 'Submit search' },
+                { id: crypto.randomUUID(), action: 'assert_visible', value: 'results', description: 'Verify results still appear correctly' }
+            ]
         });
     }
 

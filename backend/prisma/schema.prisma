@@ -39,6 +39,7 @@ model Framework {
   // Relations
   pages Page[]
   tests Test[]
+  executions TestExecution[]
   
   @@index([createdAt])
   @@index([name])
@@ -126,4 +127,38 @@ model PomElement {
   pomPage      PomPage  @relation(fields: [pomPageId], references: [id], onDelete: Cascade)
 
   @@index([pomPageId])
+}
+
+model TestExecution {
+  id          String       @id @default(uuid())
+  frameworkId String
+  framework   Framework    @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+  status      String       // 'running', 'passed', 'failed', 'error'
+  startTime   DateTime     @default(now())
+  endTime     DateTime?
+  duration    Int?         // in milliseconds
+  totalTests  Int          @default(0)
+  passCount   Int          @default(0)
+  failCount   Int          @default(0)
+  skipCount   Int          @default(0)
+  errorCount  Int          @default(0)
+  results     TestResult[]
+
+  @@index([frameworkId])
+  @@index([startTime])
+}
+
+model TestResult {
+  id              String        @id @default(uuid())
+  executionId     String
+  execution       TestExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  testName        String
+  className       String?
+  status          String        // 'passed', 'failed', 'skipped', 'error'
+  duration        Int?          // in milliseconds
+  errorMessage    String?
+  stackTrace      String?
+  
+  @@index([executionId])
+  @@index([status])
 }

@@ -26,3 +26,16 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Allure results
+*.allure-results
+
+# Pytest cache
+.pytest_cache
+
+# Pytest cache
+.pytest_cache
+*.__pycache__
+
+# backend generated files
+backend/generated/pytest-automation

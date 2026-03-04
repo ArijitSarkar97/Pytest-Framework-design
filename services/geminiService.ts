@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { AutomationProject, PageDefinition, TestCase } from "../types";
+import { AutomationProject, PageDefinition, TestCase } from "../shared/types";
 
 export const analyzeUrlAndGenerateSchema = async (
   url: string,
