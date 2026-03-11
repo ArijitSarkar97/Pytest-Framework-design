@@ -7,23 +7,25 @@ export const getAllFrameworks = async (req: Request, res: Response) => {
     try {
         const frameworks = await prisma.framework.findMany({
             include: {
-                pages: {
-                    include: { elements: true }
-                },
-                tests: {
-                    include: { steps: true }
-                }
+                pages: { include: { elements: true } },
+                tests: { include: { steps: true } }
             },
             orderBy: { updatedAt: 'desc' }
         });
 
-        // Parse JSON fields for SQLite compatibility
-        const frameworksWithParsedJson = frameworks.map(fw => ({
+        // Fetch frameworkType via raw SQL (stale Prisma client may omit this column)
+        const rawTypes = await prisma.$queryRaw<{ id: string; frameworkType: string }[]>`
+            SELECT id, frameworkType FROM Framework
+        `;
+        const typeMap = new Map(rawTypes.map(r => [r.id, r.frameworkType]));
+
+        const result = frameworks.map(fw => ({
             ...fw,
+            frameworkType: typeMap.get(fw.id) || 'pytest-selenium',
             lastUrls: JSON.parse(fw.lastUrls)
         }));
 
-        res.json(frameworksWithParsedJson);
+        res.json(result);
     } catch (error) {
         console.error('Error fetching frameworks:', error);
         res.status(500).json({ error: 'Failed to fetch frameworks' });
@@ -37,12 +39,8 @@ export const getFrameworkById = async (req: Request, res: Response) => {
         const framework = await prisma.framework.findUnique({
             where: { id },
             include: {
-                pages: {
-                    include: { elements: true }
-                },
-                tests: {
-                    include: { steps: true }
-                }
+                pages: { include: { elements: true } },
+                tests: { include: { steps: true } }
             }
         });
 
@@ -50,13 +48,19 @@ export const getFrameworkById = async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'Framework not found' });
         }
 
-        // Parse JSON fields for SQLite compatibility
-        const frameworkWithParsedJson = {
+        // Fetch frameworkType via raw SQL (stale Prisma client may omit the column)
+        const rawType = await prisma.$queryRaw<{ frameworkType: string }[]>`
+            SELECT frameworkType FROM Framework WHERE id = ${id}
+        `;
+        const frameworkType = rawType[0]?.frameworkType || 'pytest-selenium';
+
+        const result = {
             ...framework,
+            frameworkType,
             lastUrls: JSON.parse(framework.lastUrls)
         };
 
-        res.json(frameworkWithParsedJson);
+        res.json(result);
     } catch (error) {
         console.error('Error fetching framework:', error);
         res.status(500).json({ error: 'Failed to fetch framework' });
@@ -73,6 +77,7 @@ export const createFramework = async (req: Request, res: Response) => {
                 baseUrl: project?.config?.baseUrl || '',
                 browser: project?.config?.browser || 'chrome',
                 headless: project?.config?.headless ?? true,
+                frameworkType: project?.config?.frameworkType || 'pytest-selenium',
                 defaultTimeout: project?.config?.defaultTimeout ?? 30000,
                 retries: project?.config?.retries ?? 0,
                 retryDelay: project?.config?.retryDelay ?? 1000,
@@ -112,14 +117,17 @@ export const createFramework = async (req: Request, res: Response) => {
                         }
                     }))
                 }
-            },
+            } as any,
             include: {
                 pages: { include: { elements: true } },
                 tests: { include: { steps: true } }
             }
         });
 
-        res.status(201).json(framework);
+        // Attach frameworkType explicitly (stale Prisma types may omit it from the return)
+        const responseData = { ...framework, frameworkType: project?.config?.frameworkType || 'pytest-selenium' };
+        res.status(201).json(responseData);
+
     } catch (error) {
         console.error('Error creating framework:', error);
         res.status(500).json({ error: 'Failed to create framework' });
@@ -144,6 +152,7 @@ export const updateFramework = async (req: Request, res: Response) => {
                 baseUrl: project?.config?.baseUrl || '',
                 browser: project?.config?.browser || 'chrome',
                 headless: project?.config?.headless ?? true,
+                frameworkType: project?.config?.frameworkType || 'pytest-selenium',
                 defaultTimeout: project?.config?.defaultTimeout ?? 30000,
                 retries: project?.config?.retries ?? 0,
                 retryDelay: project?.config?.retryDelay ?? 1000,
@@ -182,14 +191,17 @@ export const updateFramework = async (req: Request, res: Response) => {
                         }
                     }))
                 }
-            },
+            } as any,
             include: {
                 pages: { include: { elements: true } },
                 tests: { include: { steps: true } }
             }
         });
 
-        res.json(framework);
+        // Explicitly attach frameworkType (stale Prisma types may omit it)
+        const responseData = { ...framework, frameworkType: project?.config?.frameworkType || 'pytest-selenium' };
+        res.json(responseData);
+
     } catch (error) {
         console.error('Error updating framework:', error);
         res.status(500).json({ error: 'Failed to update framework' });

@@ -39,21 +39,30 @@ Test Case Design Principles:
 """
 
 
-def build_comprehensive_prompt(test_context, knowledge_base):
+def build_comprehensive_prompt(test_context, knowledge_base, framework_type="pytest-selenium"):
     """
     Build comprehensive prompt incorporating knowledge base.
-    
-    Args:
-        test_context: Structured page description + requirements
-        knowledge_base: Test case design brain content
-        
-    Returns:
-        str: Complete prompt for Gemini
     """
+    
+    framework_specifics = ""
+    if framework_type == "pytest-playwright":
+        framework_specifics = """
+- Pytest-Playwright framework and best practices
+- Playwright Page Object Model architecture
+- Proper Playwright locator strategies (PREFER: get_by_role > get_by_text > get_by_label > get_by_testid. DO NOT PREFER CSS/XPATH unless necessary).
+- Use `page.locator` or `page.get_by_role` instead of `driver.find_element`.
+- AVOID Selenium imports or paradigms. Use ONLY Playwright paradigms.
+"""
+    else:
+        framework_specifics = """
+- Pytest framework and best practices  
+- Selenium Page Object Model architecture
+- Proper locator strategies (prefer ID > CSS > XPath)
+"""
+
     prompt = f"""You are an expert test automation engineer with deep expertise in:
 - Test case design principles and patterns
-- Pytest framework and best practices  
-- Page Object Model architecture
+{framework_specifics}
 - Boundary Value Analysis and Equivalence Partitioning
 - Comprehensive test coverage strategies
 
@@ -69,7 +78,7 @@ Generate a COMPLETE, PRODUCTION-READY test suite with the following structure:
 1. **Page Object Model Class**
    - Clean, maintainable page object for all elements
    - Descriptive method names
-   - Proper locator strategies (prefer ID > CSS > XPath)
+   - Strict adherence to the framework locators ({framework_type})
 
 2. **Smoke Tests**
    - Critical path verification
@@ -97,11 +106,11 @@ Generate a COMPLETE, PRODUCTION-READY test suite with the following structure:
    - Reusable fixtures
 
 === REQUIREMENTS ===
-- Use Pytest framework
+- Use {framework_type} framework
 - Follow naming convention: test_feature_scenario_result()
 - Include docstrings for all test methods
 - Use parametrized tests where appropriate
-- Implement proper waits (WebDriverWait, not sleep)
+- Implement proper explicitly tailored waits for the framework
 - Add clear assertions with descriptive messages
 - Ensure test independence
 - Include TODO comments for manual verification steps
@@ -111,17 +120,9 @@ Generate the complete test suite as Python code with all necessary imports and p
     return prompt
 
 
-def generate_comprehensive_tests(url, user_requirement, api_key=None):
+def generate_comprehensive_tests(url, user_requirement, framework_type="pytest-selenium", api_key=None):
     """
     Main entry point: Generate comprehensive test cases from URL.
-    
-    Args:
-        url: Target webpage URL
-        user_requirement: User's testing requirements
-        api_key: Optional Gemini API key (falls back to env var)
-        
-    Returns:
-        str: Complete test suite code
     """
     print(f"[1/4] Extracting DOM from {url}...")
     dom_data = extract_dom(url)
@@ -132,8 +133,22 @@ def generate_comprehensive_tests(url, user_requirement, api_key=None):
     print("[3/4] Loading test case design knowledge...")
     knowledge_base = load_knowledge_base()
     
+    # If playwright, load the guides
+    if framework_type == "pytest-playwright":
+        print("      Loading Playwright specific documentation...")
+        base_dir = os.path.dirname(os.path.dirname(__file__))
+        guide_path = os.path.join(base_dir, "python_playwright_framework_guide.md")
+        locators_path = os.path.join(base_dir, "playwright_locators_knowledge.md")
+        try:
+            with open(guide_path, 'r') as f:
+                knowledge_base += "\n\n=== PLAYWRIGHT FRAMEWORK GUIDE ===\n" + f.read()
+            with open(locators_path, 'r') as f:
+                knowledge_base += "\n\n=== PLAYWRIGHT LOCATORS GUIDE ===\n" + f.read()
+        except Exception as e:
+            print(f"Warning: Could not load Playwright docs: {e}")
+    
     print("[4/4] Generating comprehensive test cases with AI...")
-    prompt = build_comprehensive_prompt(test_context, knowledge_base)
+    prompt = build_comprehensive_prompt(test_context, knowledge_base, framework_type)
     
     # Generate with Gemini
     key = api_key or os.getenv("GEMINI_API_KEY")

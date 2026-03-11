@@ -123,49 +123,63 @@ const AiArchitectTab: React.FC = () => {
                     </div>
 
                     {/* Driver Configuration Section */}
-                    {generationMode === 'framework' && (
-                        <div className="border-t border-slate-700 pt-6 mt-2">
-                            <label className="block text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
-                                <Settings size={16} className="text-indigo-400" />
-                                Driver Configuration
-                            </label>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-xs text-slate-500">Browser</label>
-                                    <select
-                                        value={project.config.browser}
-                                        onChange={(e) => setProject({ ...project, config: { ...project.config, browser: e.target.value as any } })}
-                                        className="w-full glass-input rounded-lg py-2.5 px-3 text-sm"
-                                    >
-                                        <option value="all">🌍 All Browsers</option>
-                                        <option value="chrome">🌐 Chrome</option>
-                                        <option value="firefox">🦊 Firefox</option>
-                                        <option value="edge">🔷 Edge</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs text-slate-500">Project Name</label>
-                                    <input
-                                        value={project.config.projectName}
-                                        onChange={(e) => setProject({ ...project, config: { ...project.config, projectName: e.target.value } })}
-                                        placeholder="MyAutomationProject"
-                                        className="w-full glass-input rounded-lg py-2.5 px-3 text-sm"
-                                    />
-                                </div>
-                                <div className="flex items-end">
-                                    <label className="flex items-center gap-3 bg-slate-900 border border-slate-700 rounded-lg py-2.5 px-4 w-full cursor-pointer hover:border-indigo-500 transition-colors">
-                                        <input
-                                            type="checkbox"
-                                            checked={project.config.headless}
-                                            onChange={(e) => setProject({ ...project, config: { ...project.config, headless: e.target.checked } })}
-                                            className="w-4 h-4 accent-indigo-500"
-                                        />
-                                        <span className="text-sm text-slate-300">Headless Mode</span>
-                                    </label>
-                                </div>
+                    <div className="border-t border-slate-700 pt-6 mt-2">
+                        <label className="block text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
+                            <Settings size={16} className="text-indigo-400" />
+                            Driver Configuration
+                        </label>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-xs text-slate-500">Framework</label>
+                                <select
+                                    value={project.config.frameworkType}
+                                    onChange={(e) => setProject({ ...project, config: { ...project.config, frameworkType: e.target.value as any } })}
+                                    className="w-full glass-input rounded-lg py-2.5 px-3 text-sm"
+                                >
+                                    <option value="pytest-selenium">🐍 Pytest + Selenium</option>
+                                    <option value="pytest-playwright">🎭 Pytest + Playwright</option>
+                                    <option value="javascript-playwright">⚡ JS/TS + Playwright</option>
+                                </select>
                             </div>
+                            {generationMode === 'framework' && (
+                                <>
+                                    <div className="space-y-2">
+                                        <label className="text-xs text-slate-500">Browser</label>
+                                        <select
+                                            value={project.config.browser}
+                                            onChange={(e) => setProject({ ...project, config: { ...project.config, browser: e.target.value as any } })}
+                                            className="w-full glass-input rounded-lg py-2.5 px-3 text-sm"
+                                        >
+                                            <option value="all">🌍 All Browsers</option>
+                                            <option value="chrome">🌐 Chrome</option>
+                                            <option value="firefox">🦊 Firefox</option>
+                                            <option value="edge">🔷 Edge</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs text-slate-500">Project Name</label>
+                                        <input
+                                            value={project.config.projectName}
+                                            onChange={(e) => setProject({ ...project, config: { ...project.config, projectName: e.target.value } })}
+                                            placeholder="MyAutomationProject"
+                                            className="w-full glass-input rounded-lg py-2.5 px-3 text-sm"
+                                        />
+                                    </div>
+                                    <div className="flex items-end">
+                                        <label className="flex items-center gap-3 bg-slate-900 border border-slate-700 rounded-lg py-2.5 px-4 w-full cursor-pointer hover:border-indigo-500 transition-colors">
+                                            <input
+                                                type="checkbox"
+                                                checked={project.config.headless}
+                                                onChange={(e) => setProject({ ...project, config: { ...project.config, headless: e.target.checked } })}
+                                                className="w-4 h-4 accent-indigo-500"
+                                            />
+                                            <span className="text-sm text-slate-300">Headless Mode</span>
+                                        </label>
+                                    </div>
+                                </>
+                            )}
                         </div>
-                    )}
+                    </div>
 
                     <div>
                         <label className="block text-sm font-medium text-slate-300 mb-2">Additional Context (Optional)</label>

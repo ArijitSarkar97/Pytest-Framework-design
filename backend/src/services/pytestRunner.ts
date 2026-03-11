@@ -5,6 +5,8 @@ import { PrismaClient } from '@prisma/client';
 // @ts-ignore
 import { parseStringPromise } from 'xml2js';
 import { FrameworkGenerator } from './frameworkGenerator';
+import { PlaywrightFrameworkGenerator } from './playwrightFrameworkGenerator';
+import { JavascriptPlaywrightFrameworkGenerator } from './javascriptPlaywrightFrameworkGenerator';
 
 const prisma = new PrismaClient();
 
@@ -44,7 +46,14 @@ export class PytestRunner {
         }
 
         // Generate files on disk
-        const projectPath = await FrameworkGenerator.generate(framework);
+        let projectPath: string;
+        if ((framework as any).frameworkType === 'javascript-playwright') {
+            projectPath = await JavascriptPlaywrightFrameworkGenerator.generate(framework);
+        } else if ((framework as any).frameworkType === 'pytest-playwright') {
+            projectPath = await PlaywrightFrameworkGenerator.generate(framework);
+        } else {
+            projectPath = await FrameworkGenerator.generate(framework);
+        }
 
         console.log(`[PytestRunner] Starting execution ${execution.id} for project ${framework.projectName} at ${projectPath} ${testFiles ? `(Files: ${testFiles.join(', ')})` : '(All Tests)'}`);
 
@@ -54,24 +63,55 @@ export class PytestRunner {
         // We need to ensure we use the venv if it exists.
 
         let pytestCommand = 'pytest';
-        const venvPath = path.join(projectPath, 'venv', 'bin', 'pytest');
+        let isJavascript = false;
 
-        // Check if venv/bin/pytest exists, use it if so
-        try {
-            await fs.access(venvPath);
-            pytestCommand = venvPath;
-            console.log(`[PytestRunner] Using venv pytest: ${pytestCommand}`);
-        } catch {
-            console.log(`[PytestRunner] Using system pytest`);
+        // Check frameworkType to differenitate Python vs Node
+        if ((framework as any).frameworkType === 'javascript-playwright') {
+            isJavascript = true;
+            pytestCommand = 'npx';
+        } else {
+            const venvPath = path.join(projectPath, 'venv', 'bin', 'pytest');
+            try {
+                await fs.access(venvPath);
+                pytestCommand = venvPath;
+                console.log(`[PytestRunner] Using venv pytest: ${pytestCommand}`);
+            } catch {
+                console.log(`[PytestRunner] Using system pytest`);
+            }
         }
 
-        const junitReportPath = path.join(projectPath, `report-${execution.id}.xml`);
-
-        // Quote paths to handle spaces in directory names
+        const junitFileName = `report-${execution.id}.xml`;
+        const junitReportPath = path.join(projectPath, junitFileName);
         const quotedReportPath = `"${junitReportPath}"`;
         const quotedPytestCmd = `"${pytestCommand}"`;
 
-        let shellCmd = `${quotedPytestCmd} --junitxml=${quotedReportPath} -v`;
+        let shellCmd = '';
+
+        if (isJavascript) {
+            // Check if node dependencies are installed
+            try {
+                await fs.access(path.join(projectPath, 'node_modules'));
+            } catch {
+                console.log(`[PytestRunner] node_modules not found. Running npm install for ${projectPath}...`);
+                await new Promise((resolve, reject) => {
+                    const installCmd = spawn('npm install && npx playwright install --with-deps chromium', [], {
+                        cwd: projectPath,
+                        shell: true
+                    });
+                    installCmd.stdout.on('data', data => console.log(`[npm] ${data}`));
+                    installCmd.stderr.on('data', data => console.log(`[npm err] ${data}`));
+                    installCmd.on('close', code => {
+                        if (code === 0) resolve(true);
+                        else reject(new Error(`npm install failed with code ${code}`));
+                    });
+                });
+            }
+
+            // PLAYWRIGHT_JUNIT_OUTPUT_NAME enables dynamic report names in Playwright Junit Reporter
+            shellCmd = `PLAYWRIGHT_JUNIT_OUTPUT_NAME=${quotedReportPath} ${quotedPytestCmd} playwright test`;
+        } else {
+            shellCmd = `${quotedPytestCmd} --junitxml=${quotedReportPath} -v`;
+        }
 
         // Handle multiple files / parallel execution
         if (testFiles && testFiles.length > 0) {
@@ -81,11 +121,14 @@ export class PytestRunner {
                     throw new Error(`Invalid test file path: ${file}`);
                 }
             }
-            // If multiple files, potential parallel run
-            if (testFiles.length > 1) {
-                shellCmd += ' -n auto';
+            if (isJavascript) {
+                shellCmd += ' ' + testFiles.map(f => `"${f}"`).join(' ');
+            } else {
+                if (testFiles.length > 1) {
+                    shellCmd += ' -n auto';
+                }
+                shellCmd += ' ' + testFiles.map(f => `"${f}"`).join(' ');
             }
-            shellCmd += ' ' + testFiles.map(f => `"${f}"`).join(' ');
         }
 
         const child = spawn(shellCmd, [], {

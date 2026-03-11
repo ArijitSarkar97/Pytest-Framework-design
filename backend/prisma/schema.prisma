@@ -16,10 +16,11 @@ model Framework {
   updatedAt DateTime @updatedAt
   
   // Project configuration
-  projectName String   @default("pytest-automation")
-  baseUrl     String
-  browser     String   @default("chrome")
-  headless    Boolean  @default(true)
+  projectName   String   @default("pytest-automation")
+  baseUrl       String
+  browser       String   @default("chrome")
+  headless      Boolean  @default(true)
+  frameworkType String   @default("pytest-selenium")
   
   // Metadata
   totalPages Int      @default(0)
@@ -96,10 +97,11 @@ model TestStep {
 
 // POM Pages Feature Models
 model PomPageSet {
-  id        String     @id @default(uuid())
-  name      String
-  sourceUrl String
-  createdAt DateTime   @default(now())
+  id            String     @id @default(uuid())
+  name          String
+  sourceUrl     String
+  frameworkType String     @default("pytest-selenium")
+  createdAt     DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   pages     PomPage[]
 

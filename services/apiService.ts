@@ -37,7 +37,11 @@ export const mapFrameworkToProject = (framework: any): AutomationProject => {
             projectName: framework.projectName,
             baseUrl: framework.baseUrl,
             browser: framework.browser,
-            headless: framework.headless
+            headless: framework.headless,
+            frameworkType: framework.frameworkType || 'pytest-selenium',
+            defaultTimeout: framework.defaultTimeout,
+            retries: framework.retries,
+            retryDelay: framework.retryDelay
         },
         pages: framework.pages.map((p: any) => ({
             name: p.name,
@@ -140,11 +144,11 @@ export const apiService = {
         return data.code;
     },
 
-    generateComprehensiveTest: async (url: string, requirement: string, apiKey?: string): Promise<string> => {
+    generateComprehensiveTest: async (url: string, requirement: string, frameworkType: string, apiKey?: string): Promise<string> => {
         const response = await fetch(`${getApiUrl()}/api/rag/generate-comprehensive`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url, requirement, apiKey })
+            body: JSON.stringify({ url, requirement, frameworkType, apiKey })
         });
 
         if (!response.ok) {
@@ -156,13 +160,13 @@ export const apiService = {
         return data.code;
     },
 
-    generateTemplateTest: async (url: string, testTypes: string, pageName: string): Promise<{ code: string; tests?: any[] }> => {
+    generateTemplateTest: async (url: string, testTypes: string, pageName: string, frameworkType: string): Promise<{ code: string; tests?: any[] }> => {
         // Helper to validate inputs
         if (!url) throw new Error('URL is required');
         if (!testTypes) throw new Error('Test types are required');
         if (!pageName) throw new Error('Page name is required');
 
-        const requestBody = { url, testTypes, pageName };
+        const requestBody = { url, testTypes, pageName, frameworkType };
         console.log('[API SERVICE] Sending generate-template request:', JSON.stringify(requestBody, null, 2));
 
         const response = await fetch(`${getApiUrl()}/api/rag/generate-template`, {
@@ -179,3 +183,5 @@ export const apiService = {
         return response.json();
     }
 };
+
+export default apiService;

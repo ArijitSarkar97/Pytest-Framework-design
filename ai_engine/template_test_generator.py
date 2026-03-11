@@ -945,31 +945,49 @@ class TestTemplateGenerator:
         return "\n".join(fixtures)
 
 
-def generate_tests_without_api(dom_data, test_types, page_name="Login"):
+def generate_tests_without_api(dom_data, test_types, page_name="Login", framework_type="pytest-selenium"):
     """
     Generate comprehensive tests without using AI API.
-    Uses template-based generation from pre-extracted DOM structure.
-    
+    Routes to PlaywrightTemplateGenerator for pytest-playwright,
+    or uses the Selenium TestTemplateGenerator for pytest-selenium.
+
     Args:
         dom_data: Pre-extracted DOM structure from TypeScript backend service
         test_types: List of test types to generate (e.g., ['smoke', 'functional', 'negative'])
         page_name: Name for page class
+        framework_type: Target test framework (pytest-playwright or pytest-selenium)
     """
     import sys
-    # DOM data is already provided by the backend service
+
     url = dom_data.get('url', 'N/A')
-    
+
     print(f"[1/3] Using pre-extracted DOM structure...", file=sys.stderr)
     print(f"     - {len(dom_data.get('inputs', []))} inputs", file=sys.stderr)
     print(f"     - {len(dom_data.get('buttons', []))} buttons", file=sys.stderr)
     print(f"     - {len(dom_data.get('links', []))} links", file=sys.stderr)
-    
-    print("[2/3] Analyzing structure...", file=sys.stderr)
+    print(f"     - Framework: {framework_type}", file=sys.stderr)
+
+    # ── Playwright branch: delegate completely to dedicated generator ──────────
+    if framework_type == "pytest-playwright":
+        try:
+            import playwright_template_generator as pw_gen
+            print("[2/3] Using Playwright template engine...", file=sys.stderr)
+            return pw_gen.generate_tests_without_api(
+                dom_data=dom_data,
+                test_types=test_types,
+                page_name=page_name,
+                framework_type=framework_type,
+            )
+        except ImportError as exc:
+            print(f"Warning: Playwright generator not found ({exc}). Falling back to Selenium.", file=sys.stderr)
+
+    # ── Selenium branch ────────────────────────────────────────────────────────
     english_desc = convert_to_english(dom_data)
+    print("[2/3] Analyzing page structure...", file=sys.stderr)
     print(english_desc, file=sys.stderr)
-    print("\n" + "="*60 + "\n", file=sys.stderr)
-    
-    print(f"[3/3] Generating tests from templates (Types: {', '.join(test_types)})...", file=sys.stderr)
+    print("\n" + "=" * 60 + "\n", file=sys.stderr)
+
+    print(f"[3/3] Generating Selenium tests...", file=sys.stderr)
     generator = TestTemplateGenerator()
     
     # Generate POM (always needed)

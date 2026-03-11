@@ -14,6 +14,7 @@ def main():
     parser.add_argument('--dom-json', required=True, help='Pre-extracted DOM structure as JSON string')
     parser.add_argument('--test-types', required=True, help='Comma-separated test types: smoke,functional,negative,security,performance,accessibility,integration,regression')
     parser.add_argument('--page-name', default='Login', help='Page name for generated classes')
+    parser.add_argument('--framework-type', default='pytest-selenium', help='Framework type')
     
     args = parser.parse_args()
     
@@ -29,13 +30,15 @@ def main():
         print(f"URL: {dom_data.get('url', 'N/A')}", file=sys.stderr)
         print(f"Test Types: {', '.join(test_types)}", file=sys.stderr)
         print(f"Page Name: {args.page_name}", file=sys.stderr)
+        print(f"Framework: {args.framework_type}", file=sys.stderr)
         print("=" * 60, file=sys.stderr)
         print(file=sys.stderr)
         
         test_suite = generate_tests_without_api(
             dom_data=dom_data,
             test_types=test_types,
-            page_name=args.page_name
+            page_name=args.page_name,
+            framework_type=args.framework_type
         )
         
         print("\n" + "=" * 60, file=sys.stderr)

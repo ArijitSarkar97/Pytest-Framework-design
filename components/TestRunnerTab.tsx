@@ -2,6 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Play, Loader2, Search, CheckCircle, XCircle, AlertCircle, Clock, FileCode, Terminal } from 'lucide-react';
 import { useProjectContext } from '../context/ProjectContext';
 import { generatePyTestFramework } from '../services/pyGenerator';
+import { generatePlaywrightFramework } from '../services/playwrightGenerator';
+import { generateJavascriptPlaywrightFramework } from '../services/javascriptPlaywrightGenerator';
+import apiService from '../services/apiService';
 
 interface TestFile {
     name: string;
@@ -24,10 +27,18 @@ const TestRunnerTab: React.FC = () => {
     // Load test files from project
     useEffect(() => {
         if (project) {
-            const files = generatePyTestFramework(project, generationMode);
+            const files = project.config.frameworkType === 'javascript-playwright'
+                ? generateJavascriptPlaywrightFramework(project, generationMode)
+                : project.config.frameworkType === 'pytest-playwright'
+                    ? generatePlaywrightFramework(project, generationMode)
+                    : generatePyTestFramework(project, generationMode);
             const suiteFiles: TestFile[] = [];
             files.forEach((_, path) => {
-                if (path.startsWith('tests/test_') && path.endsWith('.py')) {
+                // Adjust filter criteria for UI File List depending on extension 
+                if (
+                    (path.startsWith('tests/test_') && path.endsWith('.py')) ||
+                    (path.startsWith('tests/') && path.endsWith('.spec.ts'))
+                ) {
                     suiteFiles.push({
                         name: path.split('/').pop() || path,
                         path: path,

@@ -72,6 +72,7 @@ const PomLibraryTab: React.FC = () => {
                                     </div>
                                     <div className="text-xs text-slate-500 mb-4">
                                         <div>Source: <span className="font-mono text-slate-400">{pomSet.sourceUrl}</span></div>
+                                        <div>Framework: <span className="font-mono text-indigo-400">{pomSet.frameworkType === 'javascript-playwright' ? '⚡ JS Playwright' : pomSet.frameworkType === 'pytest-playwright' ? '🎭 Playwright' : '🐍 Selenium'}</span></div>
                                         <div>Created: {new Date(pomSet.createdAt).toLocaleString()}</div>
                                     </div>
 

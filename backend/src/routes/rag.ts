@@ -126,7 +126,7 @@ router.post('/generate', async (req, res) => {
 
 // NEW: Comprehensive knowledge-based test generation
 router.post('/generate-comprehensive', async (req, res) => {
-    const { url, requirement, apiKey } = req.body;
+    const { url, requirement, frameworkType, apiKey } = req.body;
 
     if (!url || !requirement) {
         return res.status(400).json({ error: 'URL and requirement are required' });
@@ -141,6 +141,10 @@ router.post('/generate-comprehensive', async (req, res) => {
             '--url', url,
             '--requirement', requirement
         ];
+
+        if (frameworkType) {
+            args.push('--framework-type', frameworkType);
+        }
 
         if (apiKey) {
             args.push('--api-key', apiKey);
@@ -183,9 +187,9 @@ router.post('/generate-comprehensive', async (req, res) => {
 
 // NEW: API-Free Template-based test generation
 router.post('/generate-template', async (req, res) => {
-    const { url, testTypes, pageName } = req.body;
+    const { url, testTypes, pageName, frameworkType } = req.body;
 
-    console.log('[DEBUG] Received template generation request:', { url, testTypes, pageName });
+    console.log('[DEBUG] Received template generation request:', { url, testTypes, pageName, frameworkType });
 
     const missingParams = [];
     if (!url) missingParams.push('url');
@@ -225,9 +229,12 @@ router.post('/generate-template', async (req, res) => {
             '--page-name', pageName
         ];
 
+        if (frameworkType) {
+            args.push('--framework-type', frameworkType);
+        }
+
         console.log(`[3/3] Executing Template Generation: ${pythonPath} ${scriptPath}`);
-        console.log(`[DEBUG] Args:`, args);
-        console.log(`[DEBUG] DOM JSON length:`, JSON.stringify(pythonDom).length);
+        console.log(`[DEBUG] Args log excluded (too large)`);
         const pythonProcess = spawn(pythonPath, args);
 
         let dataString = '';

@@ -4,6 +4,7 @@ export interface PomPageSet {
     id: string;
     name: string;
     sourceUrl: string;
+    frameworkType: string;
     createdAt: string;
     updatedAt: string;
     pages: Array<{
@@ -32,11 +33,11 @@ export const pomPageService = {
         return response.json();
     },
 
-    create: async (name: string, sourceUrl: string, pages: any[]): Promise<PomPageSet> => {
+    create: async (name: string, sourceUrl: string, frameworkType: string, pages: any[]): Promise<PomPageSet> => {
         const response = await fetch(`${API_URL}/api/pom-pages`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, sourceUrl, pages })
+            body: JSON.stringify({ name, sourceUrl, frameworkType, pages })
         });
         if (!response.ok) throw new Error('Failed to create POM set');
         return response.json();

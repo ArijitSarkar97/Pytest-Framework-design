@@ -45,13 +45,14 @@ export const getPomSetById = async (req: Request, res: Response) => {
 };
 
 export const createPomSet = async (req: Request, res: Response) => {
-    const { name, sourceUrl, pages } = req.body;
+    const { name, sourceUrl, frameworkType, pages } = req.body;
 
     try {
         const pomSet = await prisma.pomPageSet.create({
             data: {
                 name: name || `POM_Pages_${Date.now()}`,
                 sourceUrl,
+                frameworkType: frameworkType || 'pytest-selenium',
                 pages: {
                     create: (pages || []).map((page: any) => ({
                         name: page.name,

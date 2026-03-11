@@ -36,7 +36,11 @@ export interface ProjectConfig {
     projectName: string;
     baseUrl: string;
     browser: 'chrome' | 'firefox' | 'edge' | 'all';
-    headless: boolean;
+    headless?: boolean;
+    defaultTimeout?: number;
+    retries?: number;
+    retryDelay?: number;
+    frameworkType: 'pytest-selenium' | 'pytest-playwright' | 'javascript-playwright';
 }
 
 export interface AutomationProject {

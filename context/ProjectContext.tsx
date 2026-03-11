@@ -2,10 +2,9 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 import { AutomationProject, PageDefinition, TestCase, ElementDefinition } from '../shared/types';
 import { analyzeDomAndGenerateSchema } from '../services/domAnalysisService';
 import { generatePyTestFramework } from '../services/pyGenerator';
-import {
-    apiService,
-    type SavedFramework
-} from '../services/apiService';
+import { generatePlaywrightFramework } from '../services/playwrightGenerator';
+import { generateJavascriptPlaywrightFramework } from '../services/javascriptPlaywrightGenerator';
+import apiService, { SavedFramework } from '../services/apiService';
 import { pomPageService, type PomPageSet } from '../services/pomPageService';
 import ToastContainer, { type ToastMessage, type ToastType } from '../components/Toast';
 import JSZip from 'jszip';
@@ -18,6 +17,7 @@ export const INITIAL_PROJECT: AutomationProject = {
         baseUrl: 'https://example.com',
         browser: 'chrome',
         headless: true,
+        frameworkType: 'pytest-selenium',
     },
     pages: [],
     tests: []
@@ -312,22 +312,36 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const handleLoadFramework = async (id: string) => {
         try {
             const { framework, project } = await apiService.getById(id);
+
+            // Restore project state first
             setProject(project);
             setActiveFrameworkId(id);
             localStorage.setItem('activeFrameworkId', id);
             setFrameworkName(framework.name);
 
+            // Reset generation mode to 'framework' (full framework, not just POM)
+            setGenerationMode('framework');
+
+            // Clear the selected file so preview auto-picks the right file for this framework
+            setSelectedPreviewFile('');
+
             if (framework.lastUrls && framework.lastUrls.length > 0) {
                 setAiUrls(framework.lastUrls);
             }
 
-            setActiveTab('pages');
-            showToast('success', 'Framework loaded successfully!');
+            // Defer tab switch by a tick so React flushes setProject + setGenerationMode
+            // before the preview useEffect runs, ensuring it sees the loaded project
+            setTimeout(() => {
+                setActiveTab('preview');
+            }, 50);
+
+            showToast('success', `Framework "${framework.name}" loaded!`);
         } catch (error) {
             showToast('error', 'Failed to load framework');
             console.error(error);
         }
     };
+
 
     const handleDeleteFramework = async (id: string) => {
         if (confirm('Are you sure you want to delete this framework?')) {
@@ -360,7 +374,11 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
             const json = JSON.stringify(exportData, null, 2);
 
             const zip = new JSZip();
-            const files = generatePyTestFramework(project, generationMode);
+            const files = project.config.frameworkType === 'javascript-playwright'
+                ? generateJavascriptPlaywrightFramework(project, generationMode)
+                : project.config.frameworkType === 'pytest-playwright'
+                    ? generatePlaywrightFramework(project, generationMode)
+                    : generatePyTestFramework(project, generationMode);
 
             files.forEach((content: string, path: string) => {
                 zip.file(path, content);
@@ -436,7 +454,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         const sourceUrl = validUrls[0] || project.config.baseUrl;
 
         try {
-            const saved = await pomPageService.create(name, sourceUrl, project.pages);
+            const saved = await pomPageService.create(name, sourceUrl, project.config.frameworkType, project.pages);
             setSavedPomSets(prev => [saved, ...prev]);
             setPomSetName('');
             showToast('success', `POM Pages "${name}" saved successfully!`);
@@ -461,22 +479,39 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 }))
             }));
 
+            // Replace project pages completely with the loaded POM set (do NOT accumulate)
             setProject(prev => ({
                 ...prev,
-                pages: [...prev.pages, ...loadedPages]
+                config: {
+                    ...prev.config,
+                    // Restore the frameworkType saved with this POM set
+                    frameworkType: (pomSet.frameworkType || prev.config.frameworkType) as any,
+                    baseUrl: pomSet.sourceUrl || prev.config.baseUrl
+                },
+                pages: loadedPages,   // ← replace, not spread
+                tests: []             // clear tests so preview reflects only the loaded POM
             }));
 
             if (pomSet.sourceUrl) {
                 setAiUrls([pomSet.sourceUrl]);
             }
 
-            setActiveTab('pages');
-            showToast('success', `POM Pages loaded successfully! ${loadedPages.length} pages added.`);
+            // Reset selected file and generation mode so preview auto-picks the right page
+            setSelectedPreviewFile('');
+            setGenerationMode('pom');
+
+            // Defer tab switch so React flushes setProject first
+            setTimeout(() => {
+                setActiveTab('preview');
+            }, 50);
+
+            showToast('success', `POM "${pomSet.name}" loaded! (${loadedPages.length} page(s))`);
         } catch (error) {
             showToast('error', 'Failed to load POM pages');
             console.error(error);
         }
     };
+
 
     const handleDeletePomSet = async (id: string) => {
         if (confirm('Are you sure you want to delete this POM set?')) {
@@ -528,7 +563,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 const sourceUrl = validUrls[0];
 
                 try {
-                    const saved = await pomPageService.create(name, sourceUrl, allPages);
+                    const saved = await pomPageService.create(name, sourceUrl, project.config.frameworkType, allPages);
                     setSavedPomSets(prev => [saved, ...prev]);
                     setPomSetName('');
 
@@ -546,48 +581,61 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
                     showToast('error', 'Failed to save POM pages. Please try again.');
                 }
             } else {
-                let finalPages = allPages;
-                let finalTests = allTests;
-
-                if (activeFrameworkId) {
-                    finalPages = [...project.pages, ...allPages];
-                    finalTests = [...project.tests, ...allTests];
-                }
-
+                // ── Always use ONLY the newly generated pages/tests (do NOT accumulate old ones)
                 const newProject = {
                     ...project,
                     config: { ...project.config, baseUrl: validUrls[0] },
-                    pages: finalPages,
-                    tests: finalTests
+                    pages: allPages,
+                    tests: allTests
                 };
 
                 setProject(newProject);
 
-                try {
-                    if (activeFrameworkId) {
-                        await apiService.update(activeFrameworkId, frameworkName, newProject, validUrls);
-                        showToast('success', `Framework "${frameworkName}" updated successfully!`);
-                    } else {
-                        const saved = await apiService.create(
-                            frameworkName || `Framework_${Date.now()}`,
-                            newProject,
-                            validUrls
-                        );
-                        setActiveFrameworkId(saved.id);
-                        localStorage.setItem('activeFrameworkId', saved.id);
-                        setSavedFrameworks(prev => [saved, ...prev]);
-                        showToast('success', `Framework "${saved.name}" saved successfully!`);
-                    }
+                // Set Code Preview to the newest generated file
+                const isPy = project.config.frameworkType.startsWith('pytest');
+                const testExt = isPy ? '.py' : '.spec.ts';
+                const pageExt = isPy ? '.py' : '.ts';
 
+                if (allTests && allTests.length > 0) {
+                    const firstNewTest = allTests[0];
+                    const safeTestName = isPy
+                        ? firstNewTest.name.toLowerCase().replace(/[^a-z0-9_]/g, '_')
+                        : firstNewTest.name.split(/(?=[A-Z])/).join('-').toLowerCase();
+
+                    const prefix = isPy ? 'tests/test_' : 'tests/';
+                    setSelectedPreviewFile(`${prefix}${safeTestName}${testExt}`);
+                } else if (allPages && allPages.length > 0) {
+                    const firstNewPage = allPages[0];
+                    const safePageName = isPy
+                        ? firstNewPage.name.toLowerCase().replace(/[^a-z0-9_]/g, '_') + '_page'
+                        : firstNewPage.name;
+
+                    setSelectedPreviewFile(`pages/${safePageName}${pageExt}`);
+                }
+
+                try {
+                    // AI generation always creates a NEW framework.
+                    // The explicit "Save Framework" button (handleSaveFramework) is the
+                    // only path that updates/overwrites an existing saved framework.
+                    const saved = await apiService.create(
+                        frameworkName || `Framework_${new Date().toLocaleString()}`,
+                        newProject,
+                        validUrls
+                    );
+                    // Make the newly saved framework the active one
+                    setActiveFrameworkId(saved.id);
+                    localStorage.setItem('activeFrameworkId', saved.id);
                     const frameworks = await apiService.getAll();
                     setSavedFrameworks(frameworks);
-                    setActiveTab('frameworks');
+                    showToast('success', `Framework "${saved.name}" saved! (${allPages.length} page(s), ${allTests.length} test(s))`);
+                    setActiveTab('preview');
                 } catch (err) {
-                    console.error("Auto-save failed:", err);
-                    showToast('warning', 'Framework generated but failed to save to backend. Check console for details.');
-                    setActiveTab('pages');
+                    console.error('Auto-save failed:', err);
+                    showToast('warning', 'Framework generated but failed to save. Check console for details.');
+                    setActiveTab('preview');
                 }
             }
+
         } catch (error) {
             showToast('error', 'Failed to generate structure. Please check the URLs.');
             console.error(error);
@@ -639,9 +687,10 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 console.log('[FRONTEND] Calls generateTemplateTest with:', {
                     url: ragUrl,
                     testTypes: ragTestTypes.join(','),
-                    pageName: derivedName
+                    pageName: derivedName,
+                    frameworkType: project.config.frameworkType
                 });
-                const resp = await apiService.generateTemplateTest(ragUrl, ragTestTypes.join(','), derivedName);
+                const resp = await apiService.generateTemplateTest(ragUrl, ragTestTypes.join(','), derivedName, project.config.frameworkType);
                 setRagCode(resp.code);
                 setRagTests(resp.tests || []);
                 if (resp.tests && resp.tests.length > 0) {
@@ -651,7 +700,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
             } else {
                 setRagLog('Initializing AI Agent... Capturing page context (Screenshots + DOM)...');
                 const requirement = `Generate ${ragTestTypes.join(', ')} tests`;
-                const code = await apiService.generateComprehensiveTest(ragUrl, requirement, ragApiKey);
+                const code = await apiService.generateComprehensiveTest(ragUrl, requirement, project.config.frameworkType, ragApiKey);
                 setRagCode(code);
                 setRagLog('✨ Generated using AI Reasoning!');
             }
@@ -666,13 +715,26 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // --- Preview Files ---
     useEffect(() => {
         if (activeTab === 'preview') {
-            const files = generatePyTestFramework(project, generationMode);
+            const files = project.config.frameworkType === 'javascript-playwright'
+                ? generateJavascriptPlaywrightFramework(project, generationMode)
+                : project.config.frameworkType === 'pytest-playwright'
+                    ? generatePlaywrightFramework(project, generationMode)
+                    : generatePyTestFramework(project, generationMode);
             setPreviewFiles(files);
             if (!selectedPreviewFile || !files.has(selectedPreviewFile)) {
                 const allFiles = Array.from(files.keys());
-                const preferred = allFiles.find(f => f.startsWith('tests/test_') && !f.includes('__init__')) ||
-                    allFiles.find(f => f.startsWith('pages/') && !f.includes('base_page') && !f.includes('__init__')) ||
-                    allFiles[0];
+                const isPy = project.config.frameworkType.startsWith('pytest');
+
+                let preferred;
+                if (isPy) {
+                    preferred = allFiles.find(f => f.startsWith('tests/test_') && !f.includes('__init__')) ||
+                        allFiles.find(f => f.startsWith('pages/') && !f.includes('base_page') && !f.includes('__init__')) ||
+                        allFiles[0];
+                } else {
+                    preferred = allFiles.find(f => f.startsWith('tests/') && f.endsWith('.spec.ts')) ||
+                        allFiles.find(f => f.startsWith('pages/') && f.endsWith('.ts') && !f.includes('BasePage')) ||
+                        allFiles[0];
+                }
 
                 setSelectedPreviewFile(preferred || '');
             }
@@ -686,7 +748,11 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // --- Download ---
     const handleDownload = async () => {
         const zip = new JSZip();
-        const files = generatePyTestFramework(project, generationMode);
+        const files = project.config.frameworkType === 'javascript-playwright'
+            ? generateJavascriptPlaywrightFramework(project, generationMode)
+            : project.config.frameworkType === 'pytest-playwright'
+                ? generatePlaywrightFramework(project, generationMode)
+                : generatePyTestFramework(project, generationMode);
 
         const rootFolder = zip.folder(project.config.projectName);
 
